@@ -238,6 +238,20 @@
             line-height: 1.4;
         }
 
+        /* Toast */
+        .toast {
+            position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%) translateY(20px);
+            background: var(--text); color: var(--bg);
+            padding: 12px 20px; border-radius: 14px;
+            font-size: 14px; font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            opacity: 0; pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 9999; max-width: 90%;
+            text-align: center;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
         /* Lab check rows */
         .lab-row {
             display: flex; align-items: center; gap: 10px;
@@ -647,6 +661,7 @@
                     <button class="mini-btn primary" onclick="savePause()">Применить</button>
                     <button class="mini-btn warn" onclick="clearPause()">Очистить</button>
                 </div>
+                <div style="font-size:11px;color:var(--muted);margin-top:4px;">Изменения сохраняются автоматически при заполнении обеих дат.</div>
                 <div id="pauseHint"></div>
             </div>
         </div>
@@ -688,7 +703,7 @@
     <div class="footer">
         Клиника проф. Калинченко<br>
         Врач Бушуева А.О. · Фомин А.М.<br>
-        Протокол от 25.05.2026 · v4.0
+        Протокол от 25.05.2026 · v5.0
     </div>
 </div>
 
@@ -700,6 +715,9 @@
     <button onclick="go('prog',this)"><span class="ni">📊</span>Прогресс</button>
     <button onclick="go('info',this)"><span class="ni">ℹ️</span>Инфо</button>
 </div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
 
 <script>
 // ===== DATA =====
@@ -1012,7 +1030,7 @@ function renderNextAction(){
         location: next.calLocation || CLINIC_ADDRESS
     });
     const extra = info.diff < 0 ? `Просрочено на ${Math.abs(info.diff)} дн.` : (info.diff === 0 ? 'Нужно сделать сегодня' : `Осталось ${info.diff} дн.`);
-    const html = `<div class="next-card ${info.dot==='overdue'?'overdue':''}"><div class="next-kicker">Следующее действие</div><div class="next-name">${next.name}</div><div class="next-meta">📅 ${fmtDMY(next.date)} · 12:00 · ${extra}<br>${next.detail || ''}<br><span style="font-size:11px;">📍 ${CLINIC_ADDRESS}</span></div><div class="next-actions"><a href="${info.cal}" target="_blank" class="mini-btn primary">📅 В календарь</a></div></div>`;
+    const html = `<div class="next-card ${info.dot==='overdue'?'overdue':''}"><div class="next-kicker">Следующее действие</div><div class="next-name">${next.name}</div><div class="next-meta">📅 ${fmtDMY(next.date)} · 12:00 · ${extra}<br>${next.detail || ''}<br><span style="font-size:11px;">🏥 ${CLINIC_NAME} · ${CLINIC_ADDRESS}</span></div><div class="next-actions"><a href="${info.cal}" download="event.ics" class="mini-btn primary">📅 В календарь</a></div></div>`;
     setEmpty(html);
 }
 
@@ -1065,20 +1083,54 @@ function adjustForPause(dateStr){
     return dateStr;
 }
 
+function showToast(msg, type){
+    const t = document.getElementById('toast');
+    if(!t) return;
+    t.textContent = msg;
+    t.style.background = type === 'warn' ? 'var(--warn)' :
+                         type === 'success' ? 'var(--accent)' :
+                         'var(--text)';
+    t.style.color = (type === 'warn' || type === 'success') ? '#fff' : 'var(--bg)';
+    t.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
 function savePause(){
-    const s = document.getElementById('pauseStartInput').value;
-    const e = document.getElementById('pauseEndInput').value;
-    if(!s || !e){ alert('Заполни обе даты'); return; }
-    if(s > e){ alert('«С» должна быть раньше «По»'); return; }
+    const sEl = document.getElementById('pauseStartInput');
+    const eEl = document.getElementById('pauseEndInput');
+    const s = sEl ? sEl.value : '';
+    const e = eEl ? eEl.value : '';
+    if(!s && !e){ showToast('Заполни обе даты', 'warn'); return; }
+    if(!s){ showToast('Не заполнена дата «С»', 'warn'); return; }
+    if(!e){ showToast('Не заполнена дата «По»', 'warn'); return; }
+    if(s > e){ showToast('«С» должна быть раньше «По»', 'warn'); return; }
     D.pause = { start: s, end: e };
     save();
     render();
+    showToast('✓ Пауза: ' + fmtDM(s) + ' – ' + fmtDM(e), 'success');
 }
 function clearPause(){
+    if(!hasPause()){ showToast('Пауза не задана', 'warn'); return; }
     if(!confirm('Очистить даты паузы?')) return;
     D.pause = { start: null, end: null };
     save();
     render();
+    showToast('Пауза очищена', 'success');
+}
+// Автосейв: как только оба поля валидны и оба заполнены — сохраняем
+function onPauseInputChange(){
+    const s = document.getElementById('pauseStartInput').value;
+    const e = document.getElementById('pauseEndInput').value;
+    if(s && e && s <= e){
+        // Сохраняем только если что-то реально изменилось
+        if(!D.pause || D.pause.start !== s || D.pause.end !== e){
+            D.pause = { start: s, end: e };
+            save();
+            render();
+            showToast('✓ Пауза: ' + fmtDM(s) + ' – ' + fmtDM(e), 'success');
+        }
+    }
 }
 function renderPauseInputs(){
     const s = document.getElementById('pauseStartInput');
@@ -1087,6 +1139,9 @@ function renderPauseInputs(){
     if(!s || !e || !hint) return;
     s.value = (D.pause && D.pause.start) || '';
     e.value = (D.pause && D.pause.end) || '';
+    // Привязываем обработчики один раз (защита от дублирования)
+    if(!s.dataset.bound){ s.addEventListener('change', onPauseInputChange); s.dataset.bound = '1'; }
+    if(!e.dataset.bound){ e.addEventListener('change', onPauseInputChange); e.dataset.bound = '1'; }
     if(hasPause()){
         hint.className = 'pause-hint';
         hint.innerHTML = `🛬 Активная пауза: <b>${fmtDM(D.pause.start)} – ${fmtDM(D.pause.end)}</b>. Возврат: ${fmtDM(pauseReturnDate())}.<br>Процедуры в этот период сдвинутся на ${fmtDM(pauseReturnDate())}; ХГЧ внутри окна — отменяется.`;
@@ -1268,25 +1323,86 @@ function render(){
     renderProgress();
 }
 
-const CLINIC_ADDRESS = 'Москва, улица Серафимовича, 5/16 (Клиника проф. Калинченко)';
+const CLINIC_ADDRESS = 'Москва, ул. Серафимовича, 5/16';
+const CLINIC_NAME = 'Клиника проф. Калинченко';
+const CLINIC_PHONE = '+7 (495) 937-34-03';
 
+// ICS data URI — открывает Apple Calendar нативно на iOS, не теряет location/description.
+// На Android/desktop скачается .ics-файл (Google Calendar его импортирует).
 function buildCalUrl(dateStr, title, details, opts){
     opts = opts || {};
     const time = opts.time || '12:00';
     const duration = opts.duration || 60;  // минут
-    const location = opts.location || CLINIC_ADDRESS;
+    const customLoc = opts.location;
+    const location = customLoc || (CLINIC_ADDRESS + ' (' + CLINIC_NAME + ')');
+
     const [yyyy, mm, dd] = dateStr.split('-');
     const [h, m] = time.split(':').map(Number);
     const pad = n => String(n).padStart(2, '0');
     const startStr = yyyy + mm + dd + 'T' + pad(h) + pad(m) + '00';
-    const endH = h + Math.floor((m + duration) / 60);
-    const endM = (m + duration) % 60;
+    const endTotalMin = h*60 + m + duration;
+    const endH = Math.floor(endTotalMin / 60);
+    const endM = endTotalMin % 60;
     const endStr = yyyy + mm + dd + 'T' + pad(endH) + pad(endM) + '00';
-    return 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
-        '&text=' + encodeURIComponent('🏥 ' + title) +
-        '&dates=' + startStr + '/' + endStr +
-        '&details=' + encodeURIComponent(details || 'Трекер здоровья') +
-        '&location=' + encodeURIComponent(location);
+
+    // Префикс для понятности в плотной сетке календаря
+    const fullTitle = '🏥 Клиника: ' + title;
+
+    // Расширенное описание: что делаем + адрес + телефон + время.
+    // Дублируем адрес/тел в description на случай, если клиент календаря
+    // не покажет location в основной сетке.
+    const medPart = details || 'Трекер здоровья';
+    const timeRange = pad(h) + ':' + pad(m) + '–' + pad(endH) + ':' + pad(endM);
+    const fullDesc = [
+        medPart,
+        '',
+        '🏥 ' + CLINIC_NAME,
+        '📍 ' + CLINIC_ADDRESS,
+        '📞 ' + CLINIC_PHONE,
+        '⏰ ' + timeRange,
+        '',
+        'Подробности — в трекере здоровья.'
+    ].join('\n');
+
+    // ICS escape: \, ;, , и переводы строк
+    const icsEscape = s => String(s)
+        .replace(/\\/g, '\\\\')
+        .replace(/\n/g, '\\n')
+        .replace(/,/g, '\\,')
+        .replace(/;/g, '\\;');
+
+    // DTSTAMP в UTC (требование RFC). Текущее время.
+    const now = new Date();
+    const dtstamp = now.getUTCFullYear() +
+        pad(now.getUTCMonth()+1) + pad(now.getUTCDate()) + 'T' +
+        pad(now.getUTCHours()) + pad(now.getUTCMinutes()) + pad(now.getUTCSeconds()) + 'Z';
+    const uid = 'tracker-' + dateStr + '-' + title.replace(/[^A-Za-z0-9]/g,'').slice(0,20) + '-' + Math.random().toString(36).slice(2,8) + '@health-tracker';
+
+    const ics = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Health Tracker//RU',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+        'X-WR-CALNAME:Здоровье · Курс Бушуевой',
+        'BEGIN:VEVENT',
+        'UID:' + uid,
+        'DTSTAMP:' + dtstamp,
+        'DTSTART:' + startStr,
+        'DTEND:' + endStr,
+        'SUMMARY:' + icsEscape(fullTitle),
+        'DESCRIPTION:' + icsEscape(fullDesc),
+        'LOCATION:' + icsEscape(location),
+        'BEGIN:VALARM',
+        'ACTION:DISPLAY',
+        'TRIGGER:-PT1H',
+        'DESCRIPTION:' + icsEscape(fullTitle),
+        'END:VALARM',
+        'END:VEVENT',
+        'END:VCALENDAR'
+    ].join('\r\n');
+
+    return 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
 }
 
 function renderProcCalBtn(containerId, opts){
@@ -1295,7 +1411,7 @@ function renderProcCalBtn(containerId, opts){
     if(!opts){ el.innerHTML = ''; return; }
     const { date, title, details, label, time, duration, location } = opts;
     const url = buildCalUrl(date, title, details, { time, duration, location });
-    el.innerHTML = `<a href="${url}" target="_blank" class="proc-cal-btn">📅 ${label} — ${fmtDM(date)}</a>`;
+    el.innerHTML = `<a href="${url}" download="event.ics" class="proc-cal-btn">📅 ${label} — ${fmtDM(date)}</a>`;
 }
 
 function renderProc(){
@@ -1574,7 +1690,7 @@ function renderProgress(){
             <div class="tl-info">
                 <div class="tl-name">${e.name}</div>
                 <div class="tl-date">${info.label}${e.detail ? ' · ' + e.detail : ''}</div>
-                ${e.done ? '' : `<a href="${info.cal}" target="_blank" class="tl-cal-btn">📅 В календарь · 12:00</a>`}
+                ${e.done ? '' : `<a href="${info.cal}" download="event.ics" class="tl-cal-btn">📅 В календарь · 12:00</a>`}
             </div>
         </div>`;
     }).join('');
