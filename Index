@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Трекер">
+    <meta name="theme-color" content="#00b894">
+    <title>💊 Трекер здоровья · 25.05.2026</title>
+
+    <!-- Иконка для главного экрана iOS и favicon. Если поменяешь репо/файл — поправь два URL ниже -->
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/mike182277-dot/health-tracker-v2/main/icon-180.png">
+    <link rel="icon" type="image/png" sizes="180x180" href="https://raw.githubusercontent.com/mike182277-dot/health-tracker-v2/main/icon-180.png">
+    <!-- Резервный относительный путь — на случай, если HTML открыт рядом с иконкой (например, GitHub Pages в том же репо) -->
+    <link rel="apple-touch-icon" href="icon-180.png">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #f5f7fa;
+            --card: #ffffff;
+            --card-done: #f0faf5;
+            --text: #1a1a2e;
+            --text2: #555;
+            --muted: #999;
+            --accent: #00b894;
+            --accent2: #00cec9;
+            --accent-bg: rgba(0,184,148,0.1);
+            --border: #e8ecf0;
+            --shadow: 0 2px 8px rgba(0,0,0,0.06);
+            --water: #0984e3;
+            --water-bg: rgba(9,132,227,0.08);
+            --warn: #e17055;
+            --warn-bg: rgba(225,112,85,0.08);
+            --red: #d63031;
+            --red-bg: rgba(214,48,49,0.06);
+            --gold: #f39c12;
+        }
+        [data-theme="dark"] {
+            --bg: #1a1a2e;
+            --card: rgba(255,255,255,0.06);
+            --card-done: rgba(0,184,148,0.1);
+            --text: #fff;
+            --text2: rgba(255,255,255,0.75);
+            --muted: rgba(255,255,255,0.45);
+            --border: rgba(255,255,255,0.08);
+            --shadow: 0 2px 8px rgba(0,0,0,0.2);
+            --water-bg: rgba(116,185,255,0.12);
+            --warn-bg: rgba(250,177,160,0.12);
+            --red-bg: rgba(255,118,117,0.1);
+            --accent-bg: rgba(0,184,148,0.15);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; padding: 16px; padding-bottom: 90px;
+            transition: background 0.3s, color 0.3s;
+            max-width: 480px; margin: 0 auto;
+        }
+
+        /* Header */
+        .header { text-align: center; margin-bottom: 16px; position: relative; }
+        .header h1 { font-size: 22px; margin-bottom: 6px; }
+        .theme-btn {
+            position: absolute; top: 0; right: 0;
+            width: 42px; height: 42px; border-radius: 50%;
+            border: 1px solid var(--border); background: var(--card);
+            font-size: 20px; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+        }
+        .date-nav { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 4px; }
+        .date-nav button {
+            width: 38px; height: 38px; border-radius: 50%;
+            border: 1px solid var(--border); background: var(--card);
+            font-size: 18px; cursor: pointer; color: var(--text);
+        }
+        .cur-date { font-size: 18px; font-weight: 600; min-width: 140px; }
+
+        /* Progress */
+        .progress-wrap { margin: 12px 0 16px; }
+        .progress-bar { background: var(--border); border-radius: 10px; height: 20px; overflow: hidden; }
+        .progress-fill {
+            height: 100%; border-radius: 10px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            transition: width 0.4s; display: flex; align-items: center;
+            justify-content: center; font-size: 11px; font-weight: 700; color: #fff; min-width: 36px;
+        }
+
+        /* Card */
+        .card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 16px; margin-bottom: 14px;
+            box-shadow: var(--shadow); overflow: hidden; transition: all 0.3s;
+        }
+        .card.done { background: var(--card-done); border-color: rgba(0,184,148,0.25); }
+
+        .card-header {
+            display: flex; align-items: center; gap: 10px;
+            padding: 14px 16px; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .card-check {
+            width: 28px; height: 28px; border-radius: 10px;
+            border: 2.5px solid var(--border); display: flex;
+            align-items: center; justify-content: center; flex-shrink: 0;
+            transition: all 0.2s; font-size: 16px; color: transparent;
+        }
+        .card.done .card-check { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .card-icon { font-size: 22px; }
+        .card-title { font-size: 16px; font-weight: 600; flex: 1; }
+        .card-count {
+            font-size: 11px; color: var(--muted); font-weight: 500;
+        }
+
+        .card-body { padding: 0 16px 14px; }
+        .pill-line {
+            display: flex; align-items: baseline; gap: 6px;
+            padding: 5px 0; font-size: 14px; color: var(--text2); line-height: 1.4;
+        }
+        .pill-emoji { font-size: 14px; flex-shrink: 0; }
+        .pill-tag {
+            margin-left: auto; font-size: 10px; padding: 2px 8px;
+            border-radius: 8px; background: var(--accent-bg); color: var(--accent);
+            white-space: nowrap; flex-shrink: 0;
+        }
+        .pill-tag.new { background: var(--warn-bg); color: var(--warn); }
+        .pill-tag.req { background: var(--red-bg); color: var(--red); }
+        .pill-tag.neutral { background: var(--border); color: var(--muted); }
+        .card.done .pill-line { opacity: 0.5; text-decoration: line-through; }
+        .card-hint {
+            margin: 4px 16px 12px; padding: 8px 12px; border-radius: 10px;
+            background: var(--warn-bg); font-size: 12px; color: var(--warn);
+            display: flex; gap: 6px; align-items: flex-start;
+        }
+
+        /* Water */
+        .water-target { text-align: center; font-size: 14px; color: var(--muted); margin-bottom: 4px; }
+        .water-count { text-align: center; margin-bottom: 10px; }
+        .water-count strong { font-size: 28px; color: var(--water); }
+        .water-count span { font-size: 16px; color: var(--muted); }
+        .water-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; }
+        .water-btn {
+            aspect-ratio: 1; border-radius: 14px; border: 2px solid var(--border);
+            background: var(--card); font-size: 24px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+            opacity: 0.35;
+        }
+        .water-btn.on { border-color: var(--water); background: var(--water-bg); opacity: 1; }
+        .water-note {
+            margin-top: 12px; padding: 10px 14px; border-radius: 12px;
+            background: var(--water-bg); font-size: 13px; color: var(--text2);
+            display: flex; align-items: flex-start; gap: 8px; line-height: 1.4;
+        }
+
+        /* Section title */
+        .sec-title {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.06em; color: var(--muted);
+            padding: 16px 0 8px; display: flex; align-items: center; gap: 8px;
+        }
+        .sec-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+        /* Procedure items */
+        .proc-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 16px; margin-bottom: 14px; box-shadow: var(--shadow); overflow: hidden;
+        }
+        .proc-header { padding: 14px 16px 10px; }
+        .proc-top { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+        .proc-icon { font-size: 22px; }
+        .proc-name { font-size: 16px; font-weight: 600; flex: 1; }
+        .proc-counter { font-size: 15px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+        .proc-desc { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 8px; }
+        .proc-bar { background: var(--border); border-radius: 6px; height: 8px; overflow: hidden; }
+        .proc-bar-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.4s; }
+        .proc-schedule { font-size: 12px; color: var(--muted); text-align: center; margin-top: 6px; }
+        .proc-btns {
+            display: flex; align-items: center; justify-content: center;
+            gap: 16px; padding: 10px 16px 14px;
+        }
+        .proc-btn {
+            width: 44px; height: 44px; border-radius: 14px;
+            border: 1px solid var(--border); background: var(--card);
+            font-size: 22px; cursor: pointer; color: var(--text);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .proc-btn:active { transform: scale(0.9); }
+        .proc-date-label {
+            text-align: center; font-size: 11px; color: var(--muted);
+            padding: 0 16px 8px;
+        }
+        .proc-date-label b { color: var(--accent); }
+        .proc-cal-btn {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            margin: 0 16px 14px; padding: 10px 14px;
+            background: var(--accent-bg); border: 1px solid rgba(0,184,148,0.3);
+            border-radius: 12px; color: var(--accent); font-size: 13px; font-weight: 600;
+            text-decoration: none; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .proc-cal-btn:active { transform: scale(0.98); }
+
+        .start-banner {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #fff; border-radius: 16px; padding: 18px;
+            margin-bottom: 14px; text-align: center;
+        }
+        .start-banner h3 { font-size: 16px; margin-bottom: 4px; }
+        .start-banner p { font-size: 12px; opacity: 0.9; margin-bottom: 12px; }
+        .start-banner button {
+            background: #fff; color: var(--accent); border: none;
+            padding: 10px 22px; border-radius: 10px;
+            font-size: 14px; font-weight: 700; cursor: pointer;
+        }
+
+        .trip-banner {
+            background: var(--warn-bg); border: 1.5px solid var(--warn);
+            border-radius: 16px; padding: 14px 16px; margin-bottom: 14px;
+            font-size: 13px; line-height: 1.45;
+        }
+        .trip-banner b { color: var(--warn); }
+        .trip-banner h3 { font-size: 15px; color: var(--warn); margin-bottom: 6px; }
+
+        .pause-form { display: flex; flex-direction: column; gap: 8px; }
+        .pause-row { display: flex; align-items: center; gap: 10px; }
+        .pause-row label { font-size: 13px; color: var(--muted); min-width: 24px; }
+        .pause-row input[type="date"] {
+            flex: 1; padding: 8px 10px; border-radius: 8px;
+            border: 1px solid var(--border); background: var(--card);
+            color: var(--text); font-size: 14px; font-family: inherit;
+        }
+        .pause-actions { display: flex; gap: 8px; margin-top: 6px; }
+        .pause-hint {
+            margin-top: 10px; padding: 8px 12px; border-radius: 10px;
+            background: var(--warn-bg); font-size: 12px; color: var(--text2);
+            line-height: 1.4;
+        }
+
+        /* Lab check rows */
+        .lab-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .lab-row:last-child { border-bottom: none; }
+        .lab-row.done { opacity: 0.55; }
+        .lab-row.done .lab-text { text-decoration: line-through; }
+        .lab-check {
+            width: 24px; height: 24px; border-radius: 8px;
+            border: 2px solid var(--border); display: flex;
+            align-items: center; justify-content: center; flex-shrink: 0;
+            font-size: 13px; color: transparent; transition: all 0.2s;
+        }
+        .lab-row.done .lab-check { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .lab-text { font-size: 14px; color: var(--text2); line-height: 1.35; }
+        .lab-note {
+            padding: 10px 16px 14px; font-size: 12px; color: var(--warn);
+            font-style: italic;
+        }
+        .lab-row.blocked { opacity: 0.6; }
+        .lab-row.blocked .lab-text { text-decoration: none; }
+        .lab-row.blocked .lab-check { border-style: dashed; }
+
+        /* Food */
+        .food-banner {
+            background: var(--accent-bg); border: 1.5px solid var(--accent);
+            border-radius: 16px; padding: 18px; text-align: center; margin-bottom: 14px;
+        }
+        .food-banner h3 { font-size: 18px; color: var(--accent); margin-bottom: 4px; }
+        .food-banner p { font-size: 13px; color: var(--muted); }
+        .food-line {
+            display: flex; align-items: flex-start; gap: 8px;
+            padding: 7px 0; font-size: 14px; color: var(--text2); line-height: 1.5;
+            border-bottom: 1px solid var(--border);
+        }
+        .food-line:last-child { border-bottom: none; }
+        .f-dot { flex-shrink: 0; margin-top: 6px; font-size: 7px; }
+        .f-yes { color: var(--accent); }
+        .f-no { color: var(--red); }
+
+        /* Targets */
+        .target-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 0; border-bottom: 1px solid var(--border);
+        }
+        .target-row:last-child { border-bottom: none; }
+        .t-icon { font-size: 20px; width: 30px; text-align: center; }
+        .t-label { flex: 1; font-size: 14px; color: var(--text2); }
+        .t-val { font-size: 14px; font-weight: 700; color: var(--accent); }
+
+        /* Contacts */
+        .contact-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: center; gap: 8px; }
+        .contact-row:last-child { border-bottom: none; }
+        .c-label { font-size: 13px; color: var(--muted); }
+        .c-val { font-size: 13px; font-weight: 500; text-align: right; }
+        .c-val a { color: var(--accent); text-decoration: none; }
+
+        /* Progress Dashboard */
+        .ring-wrap { text-align: center; margin-bottom: 16px; position: relative; }
+        .ring-center {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            text-align: center;
+        }
+        .ring-day { font-size: 36px; font-weight: 800; color: var(--accent); line-height: 1; }
+        .ring-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .ring-sub { font-size: 11px; color: var(--muted); }
+
+        .streak-card {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 16px; padding: 18px; text-align: center;
+            margin-bottom: 14px; color: #fff;
+        }
+        .streak-num { font-size: 42px; font-weight: 800; line-height: 1; }
+        .streak-txt { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+        .streak-sub { font-size: 11px; opacity: 0.6; margin-top: 2px; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 14px; }
+        .stat-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 14px; text-align: center; box-shadow: var(--shadow);
+        }
+        .stat-val { font-size: 24px; font-weight: 800; color: var(--accent); }
+        .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+        .achieve-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 16px; border-bottom: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+        .achieve-item:last-child { border-bottom: none; }
+        .achieve-icon {
+            width: 36px; height: 36px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; background: var(--bg); flex-shrink: 0;
+        }
+        .achieve-item.done .achieve-icon { background: var(--accent-bg); }
+        .achieve-info { flex: 1; }
+        .achieve-name { font-size: 14px; font-weight: 600; }
+        .achieve-item.done .achieve-name { text-decoration: line-through; opacity: 0.5; }
+        .achieve-desc { font-size: 11px; color: var(--muted); margin-top: 1px; }
+        .achieve-check {
+            width: 24px; height: 24px; border-radius: 50%;
+            border: 2px solid var(--border); display: flex;
+            align-items: center; justify-content: center; font-size: 14px; color: transparent;
+        }
+        .achieve-item.done .achieve-check { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+        .timeline-item {
+            display: flex; gap: 12px; padding: 14px 16px;
+            border-bottom: 1px solid var(--border); align-items: flex-start;
+        }
+        .timeline-item:last-child { border-bottom: none; }
+        .tl-dot {
+            width: 10px; height: 10px; border-radius: 50%; margin-top: 5px;
+            flex-shrink: 0;
+        }
+        .tl-dot.soon { background: var(--warn); }
+        .tl-dot.future { background: var(--border); }
+        .tl-dot.past { background: var(--accent); }
+        .tl-dot.overdue { background: var(--red); }
+        .tl-info { flex: 1; }
+        .tl-name { font-size: 14px; font-weight: 600; }
+        .tl-date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .tl-cal-btn {
+            font-size: 11px; padding: 4px 10px; border-radius: 8px;
+            border: 1px solid var(--accent); background: var(--accent-bg);
+            color: var(--accent); cursor: pointer; margin-top: 6px;
+            display: inline-block; text-decoration: none;
+        }
+
+        .course-controls-box {
+            background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+            box-shadow: var(--shadow); padding: 12px 14px; margin: 0 0 14px;
+        }
+        .course-controls-top { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+        .course-controls-meta { font-size: 13px; color: var(--muted); }
+        .course-controls-actions { display:flex; gap:8px; flex-wrap:wrap; }
+        .mini-btn {
+            border:1px solid var(--border); background:var(--card); color:var(--text);
+            padding:8px 12px; border-radius:10px; font-size:12px; font-weight:600; cursor:pointer; text-decoration:none;
+        }
+        .mini-btn.primary { background: var(--accent); border-color: var(--accent); color:#fff; }
+        .mini-btn.warn { color: var(--warn); }
+
+        .next-card {
+            background: linear-gradient(180deg, var(--accent-bg), transparent), var(--card);
+            border: 1px solid rgba(0,184,148,0.28); border-radius: 16px; box-shadow: var(--shadow);
+            padding: 16px; margin-bottom: 14px;
+        }
+        .next-card.overdue { border-color: rgba(214,48,49,0.35); background: linear-gradient(180deg, var(--red-bg), transparent), var(--card); }
+        .next-card.done { border-color: var(--border); }
+        .next-kicker { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 8px; }
+        .next-name { font-size: 18px; font-weight: 700; line-height: 1.25; }
+        .next-meta { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.45; }
+        .next-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top: 12px; }
+
+        /* Rules card on Today */
+        .rules-card {
+            background: var(--warn-bg); border: 1px solid rgba(225,112,85,0.25);
+            border-radius: 14px; padding: 12px 14px; margin-bottom: 14px;
+            font-size: 13px; color: var(--text2); line-height: 1.45;
+        }
+        .rules-card b { color: var(--warn); }
+
+        /* Bottom nav */
+        .bnav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--card); border-top: 1px solid var(--border);
+            display: flex; padding: 6px 0; padding-bottom: max(6px, env(safe-area-inset-bottom));
+            z-index: 100;
+        }
+        .bnav button {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            gap: 1px; border: none; background: none; color: var(--muted);
+            font-size: 10px; cursor: pointer; padding: 4px 0;
+        }
+        .bnav button .ni { font-size: 20px; }
+        .bnav button.on { color: var(--accent); }
+
+        .tab { display: none; }
+        .tab.on { display: block; }
+
+        .footer { text-align: center; padding: 20px 0 8px; font-size: 11px; color: var(--muted); line-height: 1.6; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    <h1>💊 Трекер здоровья</h1>
+    <div class="date-nav">
+        <button onclick="chgDate(-1)">‹</button>
+        <span class="cur-date" id="curDate"></span>
+        <button onclick="chgDate(1)">›</button>
+    </div>
+</div>
+
+<!-- TAB: Сегодня -->
+<div class="tab on" id="t-today">
+    <div id="todayStartBanner"></div>
+
+    <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill" id="progBar">0%</div></div>
+    </div>
+
+    <div class="rules-card">
+        <b>⚠️ Кальций + Магний — всегда вместе, во время еды.</b> Без пропусков. Витамин D, Альфа Д3, Омега, Ангиовит — тоже во время еды. Утрожестан и Аевит — перед сном, без привязки к еде.
+    </div>
+
+    <div id="pillBlocks"></div>
+
+    <div class="water-note" style="margin-bottom:14px;"><span>🟠</span> <span>Омега-3 встроена в блоки: утро — 2 капс, день — 1, вечер — 1. Итого 4 капсулы / 3600 мг ПНЖК (≈4000 мг по этикетке).</span></div>
+
+    <!-- Water -->
+    <div class="card">
+        <div class="card-header" style="cursor:default;">
+            <span class="card-icon">💧</span>
+            <span class="card-title">Вода</span>
+        </div>
+        <div class="card-body">
+            <div class="water-target">Цель: 2.5 литра в день (10 × 250 мл)</div>
+            <div class="water-count"><strong id="wCnt">0</strong> <span>/ 10</span></div>
+            <div class="water-grid" id="wGrid"></div>
+            <div class="water-note">
+                <span>⏰</span> <span>Пить за 10–15 мин до еды, через 1.5 ч после еды</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily homework -->
+    <div class="card" id="dailyHwCard">
+        <div class="card-header" style="cursor:default;">
+            <span class="card-icon">📋</span>
+            <span class="card-title">Домашние задания</span>
+            <span class="card-count" id="hwCount"></span>
+        </div>
+        <div id="dailyHwList"></div>
+    </div>
+</div>
+
+<!-- TAB: Процедуры -->
+<div class="tab" id="t-proc">
+    <div id="procNextAction"></div>
+
+    <!-- Омнадрен -->
+    <div class="sec-title">💉 Омнадрен 250 (тестостерон)</div>
+    <div class="proc-card">
+        <div class="proc-header">
+            <div class="proc-top">
+                <span class="proc-icon">💉</span>
+                <span class="proc-name">Омнадрен 250 мг, 1 мл в/м</span>
+                <span class="proc-counter" id="omnaCnt">0/9</span>
+            </div>
+            <div class="proc-desc">Заместительная терапия. У тебя 10 ампул на руках. Рецепт серия 45РФ № 979414. <b>Старт курса.</b></div>
+            <div class="proc-bar"><div class="proc-bar-fill" id="omnaBar"></div></div>
+            <div class="proc-schedule" id="omnaSched">9 уколов · интервал 10 дней</div>
+        </div>
+        <div class="proc-btns">
+            <button class="proc-btn" onclick="chgProc('omna',-1)">−</button>
+            <span style="font-size:14px;color:var(--muted);">уколов</span>
+            <button class="proc-btn" onclick="chgProc('omna',1)">+</button>
+        </div>
+        <div class="proc-date-label" id="omnaDateLabel"></div>
+        <div id="omnaCalBtn"></div>
+    </div>
+
+    <!-- ХГЧ -->
+    <div class="sec-title">💉 Хорионический гонадотропин</div>
+    <div class="proc-card">
+        <div class="proc-header">
+            <div class="proc-top">
+                <span class="proc-icon">💉</span>
+                <span class="proc-name">ХГЧ 1500 ЕД в/м</span>
+                <span class="proc-counter" id="hcgCnt">0/9</span>
+            </div>
+            <div class="proc-desc">Стимуляция собственного тестостерона. <b>Через 7 дней после каждой инъекции Омнадрена</b> (= за 3 дня до следующей). Хранить в холодильнике. За границу не возить.</div>
+            <div class="proc-bar"><div class="proc-bar-fill" id="hcgBar"></div></div>
+            <div class="proc-schedule" id="hcgSched">9 уколов · за 3 дня до Омнадрена</div>
+        </div>
+        <div class="proc-btns">
+            <button class="proc-btn" onclick="chgProc('hcg',-1)">−</button>
+            <span style="font-size:14px;color:var(--muted);">уколов</span>
+            <button class="proc-btn" onclick="chgProc('hcg',1)">+</button>
+        </div>
+        <div class="proc-date-label" id="hcgDateLabel"></div>
+        <div id="hcgCalBtn"></div>
+    </div>
+
+    <!-- Капельницы -->
+    <div class="sec-title">🩸 Капельницы</div>
+    <div class="proc-card">
+        <div class="proc-header">
+            <div class="proc-top">
+                <span class="proc-icon">🩸</span>
+                <span class="proc-name">Витамин С + Венофер / Ликферр</span>
+                <span class="proc-counter" id="dripCnt">0/3</span>
+            </div>
+            <div class="proc-desc">Витамин С 500 мг на 100 мл физраствора в/в капельно 10 мин. Сразу после — Венофер или Ликферр 5 мл на 200 мл физраствора в/в медленно 25 мин. В клинике. <b>Можно совмещать с уколом Омнадрена/ХГЧ в один день.</b></div>
+            <div class="proc-bar"><div class="proc-bar-fill" id="dripBar"></div></div>
+            <div class="proc-schedule" id="dripSched">Всего 3 капельницы · 1 раз в неделю</div>
+        </div>
+        <div class="proc-btns">
+            <button class="proc-btn" onclick="chgProc('drips',-1)">−</button>
+            <span style="font-size:14px;color:var(--muted);">капельниц</span>
+            <button class="proc-btn" onclick="chgProc('drips',1)">+</button>
+        </div>
+        <div class="proc-date-label" id="dripsDateLabel"></div>
+        <div id="dripsCalBtn"></div>
+    </div>
+
+    <!-- Контрольный анализ -->
+    <div class="sec-title">🧪 Контрольный анализ</div>
+    <div class="proc-card">
+        <div id="labsAfter"></div>
+        <div class="lab-note" id="labsAfterNote">Через 10 дней после 3-й инъекции Омнадрена. Результат — Врачу Бушуевой А.О. или Фомину.</div>
+    </div>
+
+    <!-- Домашние задания -->
+    <div class="sec-title">📝 Домашние задания (разовые)</div>
+    <div class="proc-card">
+        <div id="hwOnce"></div>
+        <div class="lab-note">Результаты отправить Врачу Бушуевой А.О. в WhatsApp</div>
+    </div>
+</div>
+
+<!-- TAB: Питание -->
+<div class="tab" id="t-food">
+    <div class="food-banner">
+        <h3>🥩 Безуглеводный режим</h3>
+        <p>3 месяца · Цель: дальнейшее снижение жировой ткани</p>
+    </div>
+    <div class="water-note" style="margin-bottom:10px;"><span>🥩</span> <span>Белок ~2 г/кг веса. Больше не нужно — пойдёт нагрузка на почки (креатинин).</span></div>
+    <div class="water-note" style="margin-bottom:14px;"><span>🚶</span> <span>Прогулки ~7000 шагов/день. Тяжести пока не поднимать — дефицит железа ещё не закрыт.</span></div>
+
+    <div class="card">
+        <div class="card-header" style="cursor:default;"><span class="card-icon">✅</span><span class="card-title">Можно</span></div>
+        <div class="card-body" id="foodYes"></div>
+    </div>
+    <div class="card" style="border-color:rgba(214,48,49,0.2);">
+        <div class="card-header" style="cursor:default;"><span class="card-icon">🚫</span><span class="card-title">Нельзя</span></div>
+        <div class="card-body" id="foodNo"></div>
+    </div>
+
+    <div class="sec-title">🎯 Цели режима</div>
+    <div class="card">
+        <div class="card-body" id="targets"></div>
+    </div>
+</div>
+
+<!-- TAB: Прогресс -->
+<div class="tab" id="t-prog">
+    <div id="progNextAction"></div>
+
+    <!-- Course Ring -->
+    <div class="ring-wrap">
+        <svg width="180" height="180" viewBox="0 0 180 180" id="ringSvg">
+            <circle cx="90" cy="90" r="78" stroke="var(--border)" stroke-width="10" fill="none"/>
+            <circle cx="90" cy="90" r="78" stroke="var(--accent)" stroke-width="10" fill="none"
+                stroke-linecap="round" stroke-dasharray="490" stroke-dashoffset="490"
+                transform="rotate(-90 90 90)" id="ringCircle"/>
+        </svg>
+        <div class="ring-center">
+            <div class="ring-day" id="ringDay">0</div>
+            <div class="ring-label">из 90 дней</div>
+            <div class="ring-sub" id="ringSub"></div>
+        </div>
+    </div>
+
+    <!-- Streak -->
+    <div class="streak-card">
+        <div class="streak-num" id="streakNum">0</div>
+        <div class="streak-txt">дней подряд 🔥</div>
+        <div class="streak-sub" id="streakSub">Начни серию сегодня!</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <!-- Milestones -->
+    <div class="sec-title">🏆 Вехи курса</div>
+    <div class="proc-card">
+        <div id="milestones"></div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="sec-title">📋 Ориентиры по дням</div>
+    <div class="water-note" style="margin-top:-2px;margin-bottom:14px;"><span>🧭</span> <span>Рабочие ориентиры. Считаются от даты старта курса и от фактических отметок уколов.</span></div>
+    <div class="proc-card">
+        <div id="timeline"></div>
+    </div>
+
+    <div id="progCourseControls" style="margin-top:14px;"></div>
+</div>
+
+<!-- TAB: Инфо -->
+<div class="tab" id="t-info">
+    <div class="card">
+        <div class="card-header" style="cursor:default;"><span class="card-icon">🛬</span><span class="card-title">Пауза курса (отъезд / командировка)</span></div>
+        <div class="card-body">
+            <div style="margin-bottom: 10px; font-size: 13px; color: var(--text2); line-height: 1.45;">Если в эти даты ты не сможешь делать процедуры — они автоматически перенесутся на день после возвращения. ХГЧ, попавший в окно, отменяется (после возвращения сразу Омнадрен).</div>
+            <div class="pause-form">
+                <div class="pause-row"><label>С</label><input type="date" id="pauseStartInput"></div>
+                <div class="pause-row"><label>По</label><input type="date" id="pauseEndInput"></div>
+                <div class="pause-actions">
+                    <button class="mini-btn primary" onclick="savePause()">Применить</button>
+                    <button class="mini-btn warn" onclick="clearPause()">Очистить</button>
+                </div>
+                <div id="pauseHint"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" style="cursor:default;"><span class="card-icon">🎯</span><span class="card-title">Цели по биохимии к 3-му месяцу</span></div>
+        <div class="card-body" id="bioTargets"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" style="cursor:default;"><span class="card-icon">📋</span><span class="card-title">Диагнозы</span></div>
+        <div class="card-body" id="diagnoses"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" style="cursor:default;"><span class="card-icon">⛔</span><span class="card-title">Чего категорически не делать</span></div>
+        <div class="card-body" id="dontDo"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" style="cursor:default;"><span class="card-icon">📞</span><span class="card-title">Контакты</span></div>
+        <div class="card-body" id="contacts"></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" style="cursor:default;"><span class="card-icon">🗂️</span><span class="card-title">Как читать трекер</span></div>
+        <div class="card-body">
+            <div class="food-line"><span class="f-dot f-yes">●</span>Препараты и процедуры — по протоколу от 25.05.2026.</div>
+            <div class="food-line"><span class="f-dot f-yes">●</span>Совместная консультация: Врач Бушуева А.О. + Фомин А.М.</div>
+            <div class="food-line"><span class="f-dot f-yes">●</span>Длительность курса — 3 месяца (90 дней).</div>
+            <div class="food-line"><span class="f-dot f-yes">●</span>Контроль тестостерона — через 10 дней после 3-й инъекции Омнадрена.</div>
+            <div class="food-line"><span class="f-dot f-yes">●</span>События в календарь ставятся на <b>12:00 МСК</b> (анализ крови — на 09:00).</div>
+            <div class="food-line"><span class="f-dot f-yes">●</span>Адрес для процедур: <b>Москва, ул. Серафимовича, 5/16</b>.</div>
+            <div class="food-line"><span class="f-dot f-yes">●</span>Серия (streak) растёт, если за день выполнено ≥ 3 из 4 блоков приёма.</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Клиника проф. Калинченко<br>
+        Врач Бушуева А.О. · Фомин А.М.<br>
+        Протокол от 25.05.2026 · v4.0
+    </div>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bnav">
+    <button class="on" onclick="go('today',this)"><span class="ni">💊</span>Сегодня</button>
+    <button onclick="go('proc',this)"><span class="ni">💉</span>Процедуры</button>
+    <button onclick="go('food',this)"><span class="ni">🥩</span>Питание</button>
+    <button onclick="go('prog',this)"><span class="ni">📊</span>Прогресс</button>
+    <button onclick="go('info',this)"><span class="ni">ℹ️</span>Инфо</button>
+</div>
+
+<script>
+// ===== DATA =====
+const BLOCKS = [
+    { id:'morning', icon:'🌅', title:'Утро · с завтраком', pills:[
+        { emoji:'☀️', name:'Витамин D3 NOW 10 000 МЕ', dose:'1 капс.', perm:true },
+        { emoji:'💛', name:'Альфа Д3', dose:'1 капс. (1 мкг)', tag:'3 мес.' },
+        { emoji:'🟠', name:'Омега-3', dose:'2 капс. (1800 мг)', perm:true },
+        { emoji:'🟣', name:'B-комплекс Smart Life', dose:'½ пипетки', tag:'3 мес.' },
+    ]},
+    { id:'day', icon:'☀️', title:'День · с обедом', pills:[
+        { emoji:'🦴', name:'Кальцемин Адванс', dose:'1 таб. (+ магний!)', required:true },
+        { emoji:'💙', name:'Магний B6 Форте', dose:'1 таб. (с кальцием)', required:true },
+        { emoji:'💚', name:'Ангиовит', dose:'1 таб.', tag:'3 мес.' },
+        { emoji:'🟠', name:'Омега-3', dose:'1 капс. (900 мг)', perm:true },
+        { emoji:'🌊', name:'Налемарин', dose:'1 капс. (≈300 мкг йода)', isNew:true },
+    ]},
+    { id:'evening', icon:'🌆', title:'Вечер · с ужином', pills:[
+        { emoji:'🦴', name:'Кальцемин Адванс', dose:'1 таб. (+ магний!)', required:true },
+        { emoji:'💙', name:'Магний B6 Форте', dose:'1 таб. (с кальцием)', required:true },
+        { emoji:'🟠', name:'Омега-3', dose:'1 капс. (900 мг)', perm:true },
+    ]},
+    { id:'night', icon:'🌙', title:'Перед сном', pills:[
+        { emoji:'🔴', name:'Утрожестан 200 мг', dose:'1 капс.', tag:'3 мес.' },
+        { emoji:'🟡', name:'Аевит', dose:'1 капс. (Ретинол 100 000 МЕ + E 100 мг)', tag:'3 мес.' },
+    ]},
+];
+
+const LABS_AFTER = ['Общий тестостерон (через 10 дней после 3-й инъекции Омнадрена)'];
+
+// Ежедневные домашние задания
+const DAILY_HW = [
+    { id:'temp', emoji:'🌡️', name:'Утренняя температура (ртутный)', note:'Если ниже 36 °C — написать врачу' },
+];
+
+// Разовые домашние задания (один раз за курс)
+const HW_ONCE = [
+    { id:'iodine_before', emoji:'🟫', name:'Йодный тест — закрасить йодом полоску 7×1–2 см', note:'На ночь после душа · фото «до»' },
+    { id:'iodine_after', emoji:'📸', name:'Йодный тест — фото через 9–12 часов', note:'Утром · отправить оба фото Врачу Бушуевой А.О.' },
+];
+
+const FOOD_Y = [
+    'Яйца в любом виде',
+    'Кисломолочка: сметана, творог, сыр, йогурт без добавок, кефир, ряженка',
+    'Рыба любая, включая жирные сорта',
+    'Мясо любое в любом виде',
+    'Морепродукты любые',
+    'Овощи (кроме крахмалистых: картофель, кукуруза)',
+    'Орехи — до 50 г/сутки',
+    'Зелёные яблоки, киви',
+    'Зелень: кинза, петрушка, укроп — до 50 г за раз'
+];
+const FOOD_N = [
+    'Сахар, крупы, хлеб, макароны',
+    'Хлебобулочные и кондитерские изделия',
+    'Молоко (кисломолочка — можно!)',
+    'Колбасы, сосиски, сардельки',
+    'Сладкие напитки, натуральные соки',
+    'Сладкие фрукты, сухофрукты, семечки',
+    'Крахмалистые овощи: картофель, кукуруза'
+];
+const FOOD_NEVER = [
+    { i:'🚫', t:'«Загулы» по углеводам — даже разовые. Бушуева: «не надо, поверьте»' },
+    { i:'🚫', t:'Гормон роста — на фоне инсулинорезистентности (ГСПГ 25) опасно' },
+    { i:'🚫', t:'Статины — снижаем риск через триглицериды, а не через ЛПНП' },
+    { i:'🚫', t:'Возить Омнадрен за границу — рецептурный препарат' }
+];
+const TGT = [
+    {i:'🥩',l:'Безуглеводный режим',v:'3 мес.'},
+    {i:'🍖',l:'Белок',v:'~2 г/кг'},
+    {i:'💧',l:'Вода',v:'≥ 2.5 л/сут'},
+    {i:'🚶',l:'Прогулки',v:'~7000 шагов'},
+    {i:'🏋️',l:'Тяжести',v:'пока не поднимать'}
+];
+const BIO = [
+    { i:'🩸', l:'СРБ', v:'< 1', n:'сейчас 4.11' },
+    { i:'💪', l:'Тестостерон общий', v:'> 20 нмоль/л', n:'сейчас 12.5' },
+    { i:'🦴', l:'Кальций общий', v:'2.30–2.40 ммоль/л', n:'сейчас 2.26' },
+    { i:'🧬', l:'Гомоцистеин', v:'< 8 мкмоль/л', n:'сейчас 8.8' },
+    { i:'📉', l:'ЛПНП', v:'< 3.34 ммоль/л', n:'сейчас 4.29' },
+    { i:'📈', l:'ЛПВП', v:'> 0.9 ммоль/л', n:'сейчас 0.84' },
+];
+const DIAG = [
+    'Ожирение (E66.0) — снижение жировой массы −7 кг достигнуто',
+    'Недостаточность железа',
+    'Недостаточность витамина D',
+    'Возрастной андрогенный дефицит'
+];
+const CONT = [
+    {l:'Врач Бушуева А.О.', v:'+7 916 617-… (WhatsApp)', t:'', sub:'Анализы, температура, йод-тест'},
+    {l:'Фомин А.М. (эндокринолог)', v:'через клинику', t:'74959373403'},
+    {l:'Клиника проф. Калинченко', v:'+7 (495) 937-34-03', t:'74959373403'},
+];
+
+const STORAGE_KEY = 'ht-v4-25052026';
+const DAYS = 90, WATER = 10;
+const OMNA_TOTAL = 9, HCG_TOTAL = 9, DRIPS_TOTAL = 3;
+const OMNA_INTERVAL = 10;  // дней между инъекциями Омнадрена
+const HCG_LEAD = 3;        // ХГЧ за 3 дня до Омнадрена
+const DRIPS_INTERVAL = 7;  // 1 раз в неделю
+const MO = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+
+let cur = new Date();
+let D = {};
+
+function dk(d){
+    if(typeof d === 'string') return d;
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function parseDate(s){ return new Date(s + 'T00:00:00'); }
+function addDays(s, n){ const d = parseDate(s); d.setDate(d.getDate()+n); return dk(d); }
+function fmtDMY(s){ const d = parseDate(s); return d.getDate() + ' ' + MO[d.getMonth()] + ' ' + d.getFullYear(); }
+function fmtDM(s){ const d = parseDate(s); return d.getDate() + ' ' + MO[d.getMonth()]; }
+function lastOf(arr){ return arr && arr.length ? arr[arr.length-1] : null; }
+function todayKey(){ const t = new Date(); t.setHours(0,0,0,0); return dk(t); }
+function clampToTodayOrLater(dateStr){ return (!dateStr || dateStr < todayKey()) ? todayKey() : dateStr; }
+
+function clearCourseData(){
+    const theme = D.theme;
+    D = defaultData();
+    D.theme = theme;
+}
+
+function getCourseControlsHTML(){
+    const selected = dk(cur);
+    if(!D.courseStart){
+        return `<div class="course-controls-box"><div class="course-controls-top"><div class="course-controls-meta">Курс ещё не запущен · старт с выбранной даты <b style="color:var(--text)">${fmtDMY(selected)}</b></div><div class="course-controls-actions"><button class="mini-btn primary" onclick="startCourse()">🚀 Старт курса</button></div></div></div>`;
+    }
+    return `<div class="course-controls-box"><div class="course-controls-top"><div class="course-controls-meta">Старт курса: <b style="color:var(--text)">${fmtDMY(D.courseStart)}</b> · выбрана <b style="color:var(--text)">${fmtDMY(selected)}</b></div><div class="course-controls-actions"><button class="mini-btn" onclick="startCourse()">↻ Старт заново</button><button class="mini-btn warn" onclick="resetCourse()">⟲ Сброс курса</button></div></div></div>`;
+}
+
+function renderCourseControls(){
+    const pg = document.getElementById('progCourseControls');
+    if(pg) pg.innerHTML = getCourseControlsHTML();
+}
+
+function getPlanEvents(){
+    const events = [];
+    if(!D.courseStart) return events;
+
+    // === 1. Прошедшие события (done=true) ===
+    D.procDates.omna.forEach((d, i) => {
+        events.push({
+            type:'omna', name:'Омнадрен #' + (i+1), date: d, done: true,
+            detail:'отмечен ' + fmtDM(d),
+            calTime:'12:00', calDetail:'Омнадрен 250 мг, 1 мл в/м'
+        });
+    });
+    D.procDates.hcg.forEach((d, i) => {
+        events.push({
+            type:'hcg', name:'ХГЧ #' + (i+1), date: d, done: true,
+            detail:'отмечен ' + fmtDM(d),
+            calTime:'12:00', calDetail:'Хорионический гонадотропин 1500 ЕД в/м'
+        });
+    });
+    D.procDates.drips.forEach((d, i) => {
+        events.push({
+            type:'drips', name:'Капельница #' + (i+1), date: d, done: true,
+            detail:'отмечена ' + fmtDM(d),
+            calTime:'12:00', calDuration:90,
+            calDetail:'Витамин С 500 мг (10 мин) + Венофер/Ликферр 5 мл (25 мин)'
+        });
+    });
+
+    // === 2. Будущие Омнадрены + ХГЧ между ними ===
+    let omnaCount = D.omna;
+    let hcgCount = D.hcg;
+    let lastOmnaDate = lastOf(D.procDates.omna);
+
+    while(omnaCount < OMNA_TOTAL){
+        let nextDate;
+        let shifted = false;
+        if(omnaCount === 0){
+            nextDate = D.courseStart;
+        } else {
+            nextDate = addDays(lastOmnaDate, OMNA_INTERVAL);
+        }
+        if(isInPause(nextDate)){
+            nextDate = pauseReturnDate();
+            shifted = true;
+        }
+        omnaCount++;
+        events.push({
+            type:'omna',
+            name:'Омнадрен #' + omnaCount,
+            date: nextDate,
+            done: false,
+            detail: shifted ? 'сдвинут на день после возвращения из командировки' :
+                (omnaCount === 1 ? 'старт курса · можно с капельницей в один день' :
+                    'через 10 дней после предыдущего'),
+            calTime:'12:00',
+            calDetail:'Омнадрен 250 мг, 1 мл в/м. Через 7 дней — ХГЧ.'
+        });
+        lastOmnaDate = nextDate;
+
+        // ХГЧ через 7 дней (если есть следующий Омнадрен и счётчик ХГЧ не исчерпан)
+        if(omnaCount < OMNA_TOTAL && hcgCount < HCG_TOTAL){
+            const hcgDate = addDays(nextDate, OMNA_INTERVAL - HCG_LEAD);  // = +7
+            if(!isInPause(hcgDate)){
+                hcgCount++;
+                events.push({
+                    type:'hcg',
+                    name:'ХГЧ #' + hcgCount,
+                    date: hcgDate,
+                    done: false,
+                    detail:'через 7 дней после Омнадрена (= за 3 дня до следующего)',
+                    calTime:'12:00',
+                    calDetail:'Хорионический гонадотропин 1500 ЕД в/м. Через 3 дня — Омнадрен.'
+                });
+            }
+            // если в паузу — ХГЧ пропускается (по решению Врача Бушуевой А.О.)
+        }
+    }
+
+    // === 3. Будущие капельницы ===
+    let dripsCount = D.drips;
+    let lastDripDate = lastOf(D.procDates.drips);
+
+    while(dripsCount < DRIPS_TOTAL){
+        let nextDate;
+        let shifted = false;
+        if(dripsCount === 0){
+            nextDate = D.courseStart;
+        } else {
+            nextDate = addDays(lastDripDate, DRIPS_INTERVAL);
+        }
+        if(isInPause(nextDate)){
+            nextDate = pauseReturnDate();
+            shifted = true;
+        }
+        dripsCount++;
+        events.push({
+            type:'drips',
+            name:'Капельница #' + dripsCount,
+            date: nextDate,
+            done: false,
+            detail: shifted ? 'сдвинута на день после возвращения' :
+                (dripsCount === 1 ? 'старт · можно с первым Омнадреном' :
+                    'через 7 дней · можно совмещать с уколом'),
+            calTime:'12:00',
+            calDuration:90,
+            calDetail:'Витамин С 500 мг (10 мин) + Венофер/Ликферр 5 мл (25 мин)'
+        });
+        lastDripDate = nextDate;
+    }
+
+    // === 4. Контрольный анализ тестостерона ===
+    if(D.labs['a0']){
+        events.push({
+            type:'lab',
+            name:'Контроль общего тестостерона сдан',
+            date: D.labDates['a0'],
+            done: true,
+            detail:'результат отправлен',
+            calTime:'09:00',
+            calDetail:'Общий тестостерон. Утром натощак.',
+            calLocation: CLINIC_ADDRESS
+        });
+    } else if(D.procDates.omna.length >= 3){
+        const omna3 = D.procDates.omna[2];
+        const labDate = addDays(omna3, 10);
+        events.push({
+            type:'lab',
+            name:'Контроль общего тестостерона',
+            date: labDate,
+            done: false,
+            detail:'утром натощак · результат — Врачу Бушуевой А.О.',
+            calTime:'09:00',
+            calDetail:'Общий тестостерон. Сдать утром натощак. Результат отправить Врачу Бушуевой А.О. или Фомину в WhatsApp.',
+            calLocation: CLINIC_ADDRESS
+        });
+    }
+
+    // === 5. Контрольная консультация через 90 дней ===
+    events.push({
+        type:'visit',
+        name:'Контрольная консультация',
+        date: addDays(D.courseStart, 90),
+        done: false,
+        soft: true,
+        detail:'повторный анализ по полной программе',
+        calTime:'12:00',
+        calDetail:'Контрольный визит к Врачу Бушуевой А.О. через 3 месяца от старта курса.'
+    });
+
+    events.sort((a,b)=> a.date.localeCompare(b.date));
+    return events;
+}
+
+function getNextAction(){
+    const events = getPlanEvents().filter(e => !e.done && !e.soft);
+    return events.length ? events[0] : null;
+}
+
+function renderNextAction(){
+    const next = getNextAction();
+    const targets = ['procNextAction','progNextAction'];
+    const setEmpty = html => targets.forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML = html; });
+    if(!D.courseStart){
+        setEmpty('');
+        return;
+    }
+    if(!next){
+        setEmpty(`<div class="next-card done"><div class="next-kicker">Следующее действие</div><div class="next-name">Все ключевые шаги по программе закрыты</div><div class="next-meta">Продолжаем поддерживающий режим.</div></div>`);
+        return;
+    }
+    const info = eventInfo(next.date, next.name, next.calDetail || next.detail, false, {
+        time: next.calTime || '12:00',
+        duration: next.calDuration || 60,
+        location: next.calLocation || CLINIC_ADDRESS
+    });
+    const extra = info.diff < 0 ? `Просрочено на ${Math.abs(info.diff)} дн.` : (info.diff === 0 ? 'Нужно сделать сегодня' : `Осталось ${info.diff} дн.`);
+    const html = `<div class="next-card ${info.dot==='overdue'?'overdue':''}"><div class="next-kicker">Следующее действие</div><div class="next-name">${next.name}</div><div class="next-meta">📅 ${fmtDMY(next.date)} · 12:00 · ${extra}<br>${next.detail || ''}<br><span style="font-size:11px;">📍 ${CLINIC_ADDRESS}</span></div><div class="next-actions"><a href="${info.cal}" target="_blank" class="mini-btn primary">📅 В календарь</a></div></div>`;
+    setEmpty(html);
+}
+
+function defaultData(){
+    return {
+        days: {},
+        omna: 0,
+        hcg: 0,
+        drips: 0,
+        labs: {},
+        labDates: {},
+        hwOnce: {},
+        theme: 'light',
+        courseStart: null,
+        procDates: { omna: [], hcg: [], drips: [] },
+        pause: { start: '2026-05-30', end: '2026-06-10' }
+    };
+}
+
+function normalize(){
+    const base = defaultData();
+    D = Object.assign(base, D || {});
+    D.days = D.days || {};
+    D.labs = D.labs || {};
+    D.labDates = D.labDates || {};
+    D.hwOnce = D.hwOnce || {};
+    D.procDates = D.procDates || {};
+    D.pause = D.pause || { start: null, end: null };
+    if(!Array.isArray(D.procDates.omna)) D.procDates.omna = [];
+    if(!Array.isArray(D.procDates.hcg)) D.procDates.hcg = [];
+    if(!Array.isArray(D.procDates.drips)) D.procDates.drips = [];
+    D.omna = Math.max(0, Math.min(OMNA_TOTAL, Number(D.omna) || 0));
+    D.hcg = Math.max(0, Math.min(HCG_TOTAL, Number(D.hcg) || 0));
+    D.drips = Math.max(0, Math.min(DRIPS_TOTAL, Number(D.drips) || 0));
+    if(!D.theme) D.theme = 'light';
+}
+
+// === Pause helpers ===
+function hasPause(){ return D.pause && D.pause.start && D.pause.end; }
+function isInPause(dateStr){
+    if(!hasPause()) return false;
+    return dateStr >= D.pause.start && dateStr <= D.pause.end;
+}
+function pauseReturnDate(){
+    return hasPause() ? addDays(D.pause.end, 1) : null;
+}
+function adjustForPause(dateStr){
+    if(!hasPause()) return dateStr;
+    if(isInPause(dateStr)) return pauseReturnDate();
+    return dateStr;
+}
+
+function savePause(){
+    const s = document.getElementById('pauseStartInput').value;
+    const e = document.getElementById('pauseEndInput').value;
+    if(!s || !e){ alert('Заполни обе даты'); return; }
+    if(s > e){ alert('«С» должна быть раньше «По»'); return; }
+    D.pause = { start: s, end: e };
+    save();
+    render();
+}
+function clearPause(){
+    if(!confirm('Очистить даты паузы?')) return;
+    D.pause = { start: null, end: null };
+    save();
+    render();
+}
+function renderPauseInputs(){
+    const s = document.getElementById('pauseStartInput');
+    const e = document.getElementById('pauseEndInput');
+    const hint = document.getElementById('pauseHint');
+    if(!s || !e || !hint) return;
+    s.value = (D.pause && D.pause.start) || '';
+    e.value = (D.pause && D.pause.end) || '';
+    if(hasPause()){
+        hint.className = 'pause-hint';
+        hint.innerHTML = `🛬 Активная пауза: <b>${fmtDM(D.pause.start)} – ${fmtDM(D.pause.end)}</b>. Возврат: ${fmtDM(pauseReturnDate())}.<br>Процедуры в этот период сдвинутся на ${fmtDM(pauseReturnDate())}; ХГЧ внутри окна — отменяется.`;
+    } else {
+        hint.className = '';
+        hint.innerHTML = '';
+    }
+}
+
+function load(){
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        D = raw ? JSON.parse(raw) : defaultData();
+    } catch(e){
+        D = defaultData();
+    }
+    normalize();
+}
+
+function save(){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(D)); } catch(e){}
+}
+
+function gd(k){
+    if(!D.days[k]) D.days[k] = { blocks:{}, water:0, hw:{} };
+    if(!D.days[k].hw) D.days[k].hw = {};
+    return D.days[k];
+}
+
+function startCourse(){
+    const selected = dk(cur);
+    if(D.courseStart && !confirm('Запустить курс заново с ' + fmtDMY(selected) + '? Это сбросит все отметки.')) return;
+    if(!D.courseStart && !confirm('Запустить курс с ' + fmtDMY(selected) + '?')) return;
+    clearCourseData();
+    D.courseStart = selected;
+    save();
+    render();
+}
+
+function resetCourse(){
+    if(!confirm('Полностью сбросить курс и все отметки?')) return;
+    clearCourseData();
+    save();
+    render();
+}
+
+function applyTheme(){
+    document.documentElement.setAttribute('data-theme', D.theme);
+    document.getElementById('themeBtn').textContent = D.theme === 'dark' ? '☀️' : '🌙';
+}
+function toggleTheme(){ D.theme = D.theme === 'dark' ? 'light' : 'dark'; applyTheme(); save(); }
+
+function chgDate(dir){ cur.setDate(cur.getDate()+dir); render(); }
+
+function go(t, btn){
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+    document.getElementById('t-'+t).classList.add('on');
+    document.querySelectorAll('.bnav button').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+    if(t==='prog') renderProgress();
+}
+
+function togBlock(k, bid){ const d=gd(k); d.blocks[bid]=!d.blocks[bid]; save(); render(); }
+function setWater(k, n){ const d=gd(k); d.water = d.water===n ? n-1 : n; save(); render(); }
+function togDailyHw(k, id){ const d=gd(k); d.hw[id]=!d.hw[id]; save(); render(); }
+function togHwOnce(id){ D.hwOnce[id] = !D.hwOnce[id]; if(D.hwOnce[id]) D.hwOnce[id+'_date'] = dk(cur); save(); render(); }
+
+function chgProc(type, dir){
+    const maxMap = { omna: OMNA_TOTAL, hcg: HCG_TOTAL, drips: DRIPS_TOTAL };
+    const max = maxMap[type];
+    const arr = D.procDates[type];
+    if(dir>0 && D[type] < max){
+        D[type] += 1;
+        arr.push(dk(cur));
+    } else if(dir<0 && D[type] > 0){
+        D[type] -= 1;
+        arr.pop();
+    }
+    save();
+    render();
+}
+
+function togLab(id){
+    const willSet = !D.labs[id];
+    if(willSet && id === 'a0'){
+        if(D.omna < 3){
+            alert('Контрольный анализ сдаётся после 3-й инъекции Омнадрена. Сейчас выполнено: ' + D.omna);
+            return;
+        }
+        const omna3 = D.procDates.omna[2];
+        const rec = addDays(omna3, 10);
+        const curKey = dk(cur);
+        if(curKey < rec && !confirm('Рекомендованная дата — ' + fmtDMY(rec) + ' (через 10 дней после 3-й инъекции). До неё ещё рано. Всё равно отметить?')) return;
+    }
+    D.labs[id] = willSet;
+    if(D.labs[id]) D.labDates[id] = dk(cur);
+    else delete D.labDates[id];
+    save();
+    render();
+}
+
+function render(){
+    const k = dk(cur);
+    document.getElementById('curDate').textContent = cur.getDate() + ' ' + MO[cur.getMonth()];
+    renderCourseControls();
+
+    // Start-курса баннер на табе Сегодня
+    const todayBanner = document.getElementById('todayStartBanner');
+    let bannerHtml = '';
+    if(!D.courseStart){
+        bannerHtml += `<div class="start-banner">
+            <h3>🚀 Курс ещё не запущен</h3>
+            <p>В день старта: <b>Омнадрен #1 + капельница #1</b>. Дальше через 7 дней — ХГЧ, и так по циклу.</p>
+            <button onclick="startCourse()">Старт курса с ${fmtDM(k)}</button>
+        </div>`;
+    }
+    if(isInPause(k)){
+        bannerHtml += `<div class="trip-banner">
+            <h3>🛬 Командировка</h3>
+            <b>${fmtDM(D.pause.start)} – ${fmtDM(D.pause.end)}</b>. В этот период только таблетки. Инъекции и капельницы — после возвращения <b>${fmtDM(pauseReturnDate())}</b>. ХГЧ внутри окна по решению Врача Бушуевой А.О. отменяется — возобновляем со следующего Омнадрена.
+        </div>`;
+    }
+    todayBanner.innerHTML = bannerHtml;
+
+    const d = gd(k);
+
+    // === Pill blocks ===
+    let html = '';
+    BLOCKS.forEach(b=>{
+        const done = !!d.blocks[b.id];
+        html += `<div class="card ${done?'done':''}" onclick="togBlock('${k}','${b.id}')">
+            <div class="card-header">
+                <div class="card-check">${done?'✓':''}</div>
+                <span class="card-icon">${b.icon}</span>
+                <span class="card-title">${b.title}</span>
+                <span class="card-count">${b.pills.length} шт</span>
+            </div>
+            <div class="card-body">${b.pills.map(p=>`<div class="pill-line">
+                <span class="pill-emoji">${p.emoji}</span>
+                <span>${p.name} — ${p.dose}</span>
+                ${p.required ? '<span class="pill-tag req">обязательно</span>' :
+                  p.isNew ? '<span class="pill-tag new">new</span>' :
+                  p.perm ? '<span class="pill-tag">постоянно</span>' :
+                  p.tag ? `<span class="pill-tag neutral">${p.tag}</span>` : ''}
+            </div>`).join('')}</div>
+        </div>`;
+    });
+    document.getElementById('pillBlocks').innerHTML = html;
+
+    // === Water ===
+    let wh = '';
+    for(let i=1;i<=WATER;i++) wh += `<button class="water-btn ${i<=d.water?'on':''}" onclick="setWater('${k}',${i})">💧</button>`;
+    document.getElementById('wGrid').innerHTML = wh;
+    document.getElementById('wCnt').textContent = d.water;
+
+    // === Daily homework (температура) ===
+    const dailyDone = DAILY_HW.filter(h => d.hw[h.id]).length;
+    document.getElementById('hwCount').textContent = dailyDone + '/' + DAILY_HW.length;
+    document.getElementById('dailyHwList').innerHTML = DAILY_HW.map(h=>{
+        const done = !!d.hw[h.id];
+        return `<div class="lab-row ${done?'done':''}" onclick="togDailyHw('${k}','${h.id}')">
+            <div class="lab-check">${done?'✓':''}</div>
+            <span class="lab-text"><b>${h.emoji} ${h.name}</b><br><span style="color:var(--muted);font-size:12px;">${h.note}</span></span>
+        </div>`;
+    }).join('');
+
+    // === Daily progress ===
+    const blocksDone = BLOCKS.filter(b=>d.blocks[b.id]).length;
+    const total = BLOCKS.length;
+    const pct = Math.round(blocksDone/total*100);
+    const bar = document.getElementById('progBar');
+    bar.style.width = pct + '%';
+    bar.textContent = pct + '%';
+
+    renderProc();
+    renderLabs();
+    renderHwOnce();
+    renderPauseInputs();
+    renderProgress();
+}
+
+const CLINIC_ADDRESS = 'Москва, улица Серафимовича, 5/16 (Клиника проф. Калинченко)';
+
+function buildCalUrl(dateStr, title, details, opts){
+    opts = opts || {};
+    const time = opts.time || '12:00';
+    const duration = opts.duration || 60;  // минут
+    const location = opts.location || CLINIC_ADDRESS;
+    const [yyyy, mm, dd] = dateStr.split('-');
+    const [h, m] = time.split(':').map(Number);
+    const pad = n => String(n).padStart(2, '0');
+    const startStr = yyyy + mm + dd + 'T' + pad(h) + pad(m) + '00';
+    const endH = h + Math.floor((m + duration) / 60);
+    const endM = (m + duration) % 60;
+    const endStr = yyyy + mm + dd + 'T' + pad(endH) + pad(endM) + '00';
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+        '&text=' + encodeURIComponent('🏥 ' + title) +
+        '&dates=' + startStr + '/' + endStr +
+        '&details=' + encodeURIComponent(details || 'Трекер здоровья') +
+        '&location=' + encodeURIComponent(location);
+}
+
+function renderProcCalBtn(containerId, opts){
+    const el = document.getElementById(containerId);
+    if(!el) return;
+    if(!opts){ el.innerHTML = ''; return; }
+    const { date, title, details, label, time, duration, location } = opts;
+    const url = buildCalUrl(date, title, details, { time, duration, location });
+    el.innerHTML = `<a href="${url}" target="_blank" class="proc-cal-btn">📅 ${label} — ${fmtDM(date)}</a>`;
+}
+
+function renderProc(){
+    const curKey = dk(cur);
+    const curLabel = `Отмечаю на <b>${fmtDM(curKey)}</b>`;
+
+    // === Omnadren ===
+    document.getElementById('omnaCnt').textContent = D.omna + '/' + OMNA_TOTAL;
+    document.getElementById('omnaBar').style.width = (D.omna/OMNA_TOTAL*100) + '%';
+    const lastOmna = lastOf(D.procDates.omna);
+    const omnaSched = document.getElementById('omnaSched');
+    if(lastOmna && D.omna < OMNA_TOTAL){
+        let next = addDays(lastOmna, OMNA_INTERVAL);
+        if(isInPause(next)){
+            omnaSched.innerHTML = 'Последняя: ' + fmtDMY(lastOmna) + ' · следующая <b style="color:var(--warn)">после возвращения ' + fmtDM(pauseReturnDate()) + '</b>';
+        } else {
+            omnaSched.textContent = 'Последняя: ' + fmtDMY(lastOmna) + ' · следующая через 10 дней';
+        }
+    }
+    else if(lastOmna && D.omna >= OMNA_TOTAL) omnaSched.textContent = 'Курс завершён · последняя ' + fmtDMY(lastOmna);
+    else omnaSched.textContent = '9 уколов · старт курса · интервал 10 дней';
+    document.getElementById('omnaDateLabel').innerHTML = curLabel;
+    if(D.omna < OMNA_TOTAL && D.courseStart){
+        let nextDate;
+        if(lastOmna){
+            nextDate = addDays(lastOmna, OMNA_INTERVAL);
+        } else {
+            // Первый укол: на дату старта курса (или сегодня, если старт в прошлом)
+            nextDate = clampToTodayOrLater(D.courseStart);
+        }
+        const shifted = isInPause(nextDate);
+        if(shifted) nextDate = pauseReturnDate();
+        const isFirst = D.omna === 0;
+        renderProcCalBtn('omnaCalBtn', {
+            date: nextDate,
+            title: 'Омнадрен укол #' + (D.omna+1),
+            details: (shifted ? 'После возвращения из командировки. ' : '') +
+                (isFirst ? 'Омнадрен 250 мг, 1 мл в/м. Старт курса · можно вместе с капельницей.' :
+                    'Омнадрен 250 мг, 1 мл в/м. Через 7 дней — ХГЧ.'),
+            label: 'Запланировать укол #' + (D.omna+1),
+            time: '12:00'
+        });
+    } else renderProcCalBtn('omnaCalBtn', null);
+
+    // === HCG ===
+    document.getElementById('hcgCnt').textContent = D.hcg + '/' + HCG_TOTAL;
+    document.getElementById('hcgBar').style.width = (D.hcg/HCG_TOTAL*100) + '%';
+    const lastHcg = lastOf(D.procDates.hcg);
+    const hcgSched = document.getElementById('hcgSched');
+    if(lastHcg && D.hcg < HCG_TOTAL) hcgSched.textContent = 'Последняя: ' + fmtDMY(lastHcg) + ' · следующая через 7 дней после Омнадрена';
+    else if(lastHcg && D.hcg >= HCG_TOTAL) hcgSched.textContent = 'Курс завершён · последняя ' + fmtDMY(lastHcg);
+    else hcgSched.textContent = '9 уколов · через 7 дней после Омнадрена';
+    document.getElementById('hcgDateLabel').innerHTML = curLabel;
+    if(D.hcg < HCG_TOTAL && lastOmna){
+        const nextHcgDate = addDays(lastOmna, OMNA_INTERVAL - HCG_LEAD);
+        if(isInPause(nextHcgDate)){
+            // ХГЧ в окне командировки — отменяется. Покажем уведомление.
+            document.getElementById('hcgCalBtn').innerHTML = `<div class="pause-hint" style="margin: 0 16px 14px;">🛬 Этот ХГЧ попадает в командировку — отменяется. После возвращения — Омнадрен #${D.omna+1}, и ХГЧ возобновится после него.</div>`;
+        } else {
+            renderProcCalBtn('hcgCalBtn', {
+                date: nextHcgDate,
+                title: 'ХГЧ укол #' + (D.hcg+1),
+                details: 'Хорионический гонадотропин 1500 ЕД в/м. Через 3 дня — следующий Омнадрен.',
+                label: 'Запланировать укол #' + (D.hcg+1),
+                time: '12:00'
+            });
+        }
+    } else if(D.hcg < HCG_TOTAL && D.courseStart && !lastOmna){
+        // Курс запущен, но первого Омнадрена ещё нет
+        document.getElementById('hcgCalBtn').innerHTML = `<div class="pause-hint" style="margin: 0 16px 14px; background: var(--accent-bg); color: var(--accent); border: 1px solid rgba(0,184,148,0.25);">ℹ️ ХГЧ ставится через 7 дней после Омнадрена. Сначала отметь первый укол Омнадрена.</div>`;
+    } else renderProcCalBtn('hcgCalBtn', null);
+
+    // === Drips ===
+    document.getElementById('dripCnt').textContent = D.drips + '/' + DRIPS_TOTAL;
+    document.getElementById('dripBar').style.width = (D.drips/DRIPS_TOTAL*100) + '%';
+    const lastDrip = lastOf(D.procDates.drips);
+    const dripSched = document.getElementById('dripSched');
+    if(lastDrip && D.drips < DRIPS_TOTAL){
+        let next = addDays(lastDrip, DRIPS_INTERVAL);
+        if(isInPause(next)){
+            dripSched.innerHTML = 'Последняя: ' + fmtDMY(lastDrip) + ' · следующая <b style="color:var(--warn)">после возвращения ' + fmtDM(pauseReturnDate()) + '</b>';
+        } else {
+            dripSched.textContent = 'Последняя: ' + fmtDMY(lastDrip) + ' · следующая через 7 дней';
+        }
+    }
+    else if(lastDrip && D.drips >= DRIPS_TOTAL) dripSched.textContent = 'Курс завершён · последняя ' + fmtDMY(lastDrip);
+    else dripSched.textContent = 'Всего 3 капельницы · 1 раз в неделю · можно в день укола';
+    document.getElementById('dripsDateLabel').innerHTML = curLabel;
+    if(D.drips < DRIPS_TOTAL && D.courseStart){
+        let nextDate;
+        if(lastDrip){
+            nextDate = addDays(lastDrip, DRIPS_INTERVAL);
+        } else {
+            nextDate = clampToTodayOrLater(D.courseStart);
+        }
+        const shifted = isInPause(nextDate);
+        if(shifted) nextDate = pauseReturnDate();
+        const isFirst = D.drips === 0;
+        renderProcCalBtn('dripsCalBtn', {
+            date: nextDate,
+            title: 'Капельница #' + (D.drips+1),
+            details: (shifted ? 'После возвращения из командировки. ' : '') +
+                (isFirst ? 'Витамин С 500 мг (10 мин) + Венофер/Ликферр 5 мл (25 мин). Старт · можно с первым Омнадреном.' :
+                    'Витамин С 500 мг (10 мин) + Венофер/Ликферр 5 мл (25 мин). Можно в день укола.'),
+            label: 'Запланировать капельницу #' + (D.drips+1),
+            time: '12:00',
+            duration: 90
+        });
+    } else renderProcCalBtn('dripsCalBtn', null);
+}
+
+function renderLabs(){
+    const omna3 = D.procDates.omna[2];
+    const recAfter = omna3 ? addDays(omna3, 10) : null;
+    document.getElementById('labsAfter').innerHTML = LABS_AFTER.map((l,i)=>{
+        const id = 'a' + i;
+        const done = D.labs[id];
+        const dt = D.labDates[id];
+        const blocked = D.omna < 3;
+        const suffix = done && dt ? ' · отмечен ' + fmtDM(dt) : (recAfter ? ' · рекомендовано ' + fmtDM(recAfter) : (blocked ? ' · доступно после 3-го укола Омнадрена' : ''));
+        return `<div class="lab-row ${done?'done':''} ${blocked?'blocked':''}" onclick="togLab('${id}')">
+            <div class="lab-check">${done?'✓':''}</div>
+            <span class="lab-text">${l}${suffix}</span>
+        </div>`;
+    }).join('');
+}
+
+function renderHwOnce(){
+    document.getElementById('hwOnce').innerHTML = HW_ONCE.map(h=>{
+        const done = !!D.hwOnce[h.id];
+        const dt = D.hwOnce[h.id+'_date'];
+        return `<div class="lab-row ${done?'done':''}" onclick="togHwOnce('${h.id}')">
+            <div class="lab-check">${done?'✓':''}</div>
+            <span class="lab-text"><b>${h.emoji} ${h.name}</b>${done && dt ? ' · ' + fmtDM(dt) : ''}<br><span style="color:var(--muted);font-size:12px;">${h.note}</span></span>
+        </div>`;
+    }).join('');
+}
+
+function renderStatic(){
+    document.getElementById('foodYes').innerHTML = FOOD_Y.map(f=>`<div class="food-line"><span class="f-dot f-yes">●</span>${f}</div>`).join('');
+    document.getElementById('foodNo').innerHTML = FOOD_N.map(f=>`<div class="food-line"><span class="f-dot f-no">●</span>${f}</div>`).join('');
+    document.getElementById('targets').innerHTML = TGT.map(t=>`<div class="target-row"><span class="t-icon">${t.i}</span><span class="t-label">${t.l}</span><span class="t-val">${t.v}</span></div>`).join('');
+    document.getElementById('bioTargets').innerHTML = BIO.map(b=>`<div class="target-row"><span class="t-icon">${b.i}</span><span class="t-label">${b.l}<br><span style="font-size:11px;color:var(--muted);">${b.n}</span></span><span class="t-val">${b.v}</span></div>`).join('');
+    document.getElementById('diagnoses').innerHTML = DIAG.map(d=>`<div class="food-line"><span class="f-dot f-yes">·</span>${d}</div>`).join('');
+    document.getElementById('dontDo').innerHTML = FOOD_NEVER.map(f=>`<div class="food-line"><span class="f-dot f-no">${f.i}</span>${f.t}</div>`).join('');
+    document.getElementById('contacts').innerHTML = CONT.map(c=>`<div class="contact-row"><span class="c-label">${c.l}${c.sub?'<br><span style="font-size:11px;">'+c.sub+'</span>':''}</span><span class="c-val">${c.t ? '<a href="tel:'+c.t+'">'+c.v+'</a>' : c.v}</span></div>`).join('');
+}
+
+function eventInfo(dateStr, title, details, isDone=false, opts){
+    opts = opts || {};
+    const evDate = parseDate(dateStr);
+    const todayD = new Date(); todayD.setHours(0,0,0,0);
+    const diff = Math.round((evDate - todayD)/864e5);
+    let dot='future', label='';
+    if(isDone){
+        dot='past';
+        label = diff === 0 ? 'Сегодня!' : fmtDM(dateStr);
+    } else if(diff < 0){
+        dot='overdue';
+        label='Просрочено на ' + Math.abs(diff) + ' дн.';
+    } else if(diff === 0){
+        dot='soon';
+        label='Сегодня!';
+    } else if(diff <= 7){
+        dot='soon';
+        label='Через ' + diff + ' дн.';
+    } else label = fmtDM(dateStr);
+    const cal = buildCalUrl(dateStr, title || 'Событие', details, opts);
+    return {dot, label, cal, diff};
+}
+
+function renderProgress(){
+    renderCourseControls();
+    renderNextAction();
+    if(!D.courseStart){
+        document.getElementById('ringDay').textContent = '—';
+        document.getElementById('ringCircle').style.strokeDashoffset = 490;
+        document.getElementById('ringSub').textContent = 'Нажми «Старт курса»';
+        document.getElementById('streakNum').textContent = '0';
+        document.getElementById('streakSub').textContent = 'Начни серию сегодня!';
+        document.getElementById('statsGrid').innerHTML = '';
+        document.getElementById('milestones').innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:14px;">Запусти курс, чтобы увидеть вехи</div>';
+        document.getElementById('timeline').innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:14px;">Запусти курс, чтобы увидеть ориентиры по дням</div>';
+        return;
+    }
+
+    const now = new Date(); now.setHours(0,0,0,0);
+    const dayNum = Math.max(0, Math.floor((now - parseDate(D.courseStart))/864e5) + 1);
+    const daysCapped = Math.min(dayNum, DAYS);
+    const remain = Math.max(0, DAYS - dayNum);
+    const pct = Math.min(100, Math.round(daysCapped / DAYS * 100));
+    const endDate = addDays(D.courseStart, DAYS);
+
+    document.getElementById('ringDay').textContent = daysCapped;
+    const circ = 490;
+    document.getElementById('ringCircle').style.strokeDashoffset = circ - circ*(pct/100);
+    document.getElementById('ringSub').textContent = remain>0 ? ('Осталось ' + remain + ' · финиш ' + fmtDM(endDate)) : 'Курс завершён! 🎉';
+
+    // Streak: серия дней с ≥ 3 из 4 блоков выполнено
+    let streak = 0;
+    const d2 = new Date(); d2.setHours(0,0,0,0);
+    const need = Math.ceil(BLOCKS.length * 0.67);
+    for(let i=0;i<120;i++){
+        const k = dk(d2), dd = D.days[k];
+        if(dd){
+            const bd = BLOCKS.filter(b=>dd.blocks && dd.blocks[b.id]).length;
+            if(bd >= need) streak++;
+            else if(i>0) break;
+        } else if(i>0) break;
+        d2.setDate(d2.getDate()-1);
+    }
+    document.getElementById('streakNum').textContent = streak;
+    const msgs = ['Начни серию сегодня!','Хорошее начало!','Так держать! 💪','Отлично идёшь!','Крутая серия!','Машина! 🚀','Невероятно! 🔥'];
+    document.getElementById('streakSub').textContent = msgs[Math.min(streak, msgs.length-1)];
+
+    let totalDays=0, goodDays=0;
+    for(const k in D.days){
+        const dd = D.days[k];
+        if(!dd) continue;
+        const bd = BLOCKS.filter(b=>dd.blocks && dd.blocks[b.id]).length;
+        totalDays++;
+        if(bd >= need) goodDays++;
+    }
+    document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card"><div class="stat-val">${goodDays}</div><div class="stat-lbl">Дней выполнено</div></div>
+        <div class="stat-card"><div class="stat-val">${totalDays ? Math.round(goodDays/totalDays*100) : 0}%</div><div class="stat-lbl">Успешность</div></div>
+        <div class="stat-card"><div class="stat-val">${D.omna}/${OMNA_TOTAL}</div><div class="stat-lbl">Омнадрен</div></div>
+        <div class="stat-card"><div class="stat-val">${D.hcg}/${HCG_TOTAL}</div><div class="stat-lbl">ХГЧ</div></div>
+        <div class="stat-card"><div class="stat-val">${D.drips}/${DRIPS_TOTAL}</div><div class="stat-lbl">Капельниц</div></div>
+        <div class="stat-card"><div class="stat-val">${streak}</div><div class="stat-lbl">Серия дней</div></div>
+    `;
+
+    const ms = [
+        {id:'m_drip1',icon:'🩸',name:'Первая капельница',desc:'Витамин С + Венофер'},
+        {id:'m_drip3',icon:'🩸',name:'Все 3 капельницы пройдены',desc:'Курс инфузий завершён'},
+        {id:'m_hcg1',icon:'💉',name:'Первый укол ХГЧ',desc:'Старт цикла'},
+        {id:'m_omna1',icon:'💉',name:'Первый укол Омнадрена',desc:'250 мг / 1 мл'},
+        {id:'m_omna3',icon:'💉',name:'3 инъекции Омнадрена',desc:'Время контрольного анализа'},
+        {id:'m_lab_after',icon:'🧪',name:'Контроль тестостерона сдан',desc:'Результат врачу'},
+        {id:'m_omna9',icon:'💉',name:'Все 9 инъекций Омнадрена',desc:'Курс завершён'},
+        {id:'m_iodine',icon:'🟫',name:'Йодный тест сделан',desc:'Фото отправлено'},
+        {id:'m_visit',icon:'👨‍⚕️',name:'Контрольная консультация',desc:'Через 3 месяца от старта'},
+    ];
+    const autoCheck = {
+        m_drip1: D.drips >= 1,
+        m_drip3: D.drips >= 3,
+        m_hcg1: D.hcg >= 1,
+        m_omna1: D.omna >= 1,
+        m_omna3: D.omna >= 3,
+        m_lab_after: !!D.labs['a0'],
+        m_omna9: D.omna >= 9,
+        m_iodine: !!D.hwOnce['iodine_after'],
+        m_visit: dayNum >= 90,
+    };
+    document.getElementById('milestones').innerHTML = ms.map(m=>{
+        const done = autoCheck[m.id];
+        return `<div class="achieve-item ${done?'done':''}">
+            <div class="achieve-icon">${m.icon}</div>
+            <div class="achieve-info">
+                <div class="achieve-name">${m.name}</div>
+                <div class="achieve-desc">${m.desc}</div>
+            </div>
+            <div class="achieve-check">${done?'✓':''}</div>
+        </div>`;
+    }).join('');
+
+    const events = getPlanEvents();
+    document.getElementById('timeline').innerHTML = events.map(e=>{
+        const info = eventInfo(e.date, e.name, e.calDetail || e.detail || 'Трекер здоровья', !!e.done, {
+            time: e.calTime || '12:00',
+            duration: e.calDuration || 60,
+            location: e.calLocation || CLINIC_ADDRESS
+        });
+        return `<div class="timeline-item">
+            <div class="tl-dot ${info.dot}"></div>
+            <div class="tl-info">
+                <div class="tl-name">${e.name}</div>
+                <div class="tl-date">${info.label}${e.detail ? ' · ' + e.detail : ''}</div>
+                ${e.done ? '' : `<a href="${info.cal}" target="_blank" class="tl-cal-btn">📅 В календарь · 12:00</a>`}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// INIT
+load();
+applyTheme();
+renderStatic();
+render();
+</script>
+</body>
+</html>
