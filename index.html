@@ -459,10 +459,6 @@
         <div class="progress-bar"><div class="progress-fill" id="progBar">0%</div></div>
     </div>
 
-    <div class="rules-card">
-        <b>⚠️ Кальций + Магний — всегда вместе, во время еды.</b> Без пропусков. Витамин D, Альфа Д3, Омега, Ангиовит — тоже во время еды. Утрожестан и Аевит — перед сном, без привязки к еде.
-    </div>
-
     <div id="pillBlocks"></div>
 
     <div class="water-note" style="margin-bottom:14px;"><span>🟠</span> <span>Омега-3 встроена в блоки: утро — 2 капс, день — 1, вечер — 1. Итого 4 капсулы / 3600 мг ПНЖК (≈4000 мг по этикетке).</span></div>
@@ -474,8 +470,8 @@
             <span class="card-title">Вода</span>
         </div>
         <div class="card-body">
-            <div class="water-target">Цель: 2.5 литра в день (10 × 250 мл)</div>
-            <div class="water-count"><strong id="wCnt">0</strong> <span>/ 10</span></div>
+            <div class="water-target">Цель: 2.5 литра в день (5 × 500 мл)</div>
+            <div class="water-count"><strong id="wCnt">0</strong> <span>/ 5</span></div>
             <div class="water-grid" id="wGrid"></div>
             <div class="water-note">
                 <span>⏰</span> <span>Пить за 10–15 мин до еды, через 1.5 ч после еды</span>
@@ -496,8 +492,6 @@
 
 <!-- TAB: Процедуры -->
 <div class="tab" id="t-proc">
-    <div id="procNextAction"></div>
-
     <!-- Омнадрен -->
     <div class="sec-title">💉 Омнадрен 250 (тестостерон)</div>
     <div class="proc-card">
@@ -651,6 +645,29 @@
 <!-- TAB: Инфо -->
 <div class="tab" id="t-info">
     <div class="card">
+        <div class="card-header" style="cursor:default;"><span class="card-icon">⚠️</span><span class="card-title">Главные правила приёма</span></div>
+        <div class="card-body">
+            <div style="font-size: 13px; color: var(--text2); line-height: 1.5;">
+                <b>Кальций + Магний — всегда вместе, во время еды.</b> Без пропусков ни одного дня.<br><br>
+                Витамин D, Альфа Д3, Омега-3, Ангиовит — тоже <b>во время еды</b> (жирорастворимые работают только с пищей).<br><br>
+                Утрожестан и Аевит — <b>на ночь, перед сном</b>, без привязки к еде.
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" style="cursor:default;"><span class="card-icon">🏥</span><span class="card-title">Расписание клиники</span></div>
+        <div class="card-body">
+            <div style="font-size: 13px; color: var(--text2); line-height: 1.5;">
+                <b>Клиника проф. Калинченко не работает по воскресеньям.</b><br><br>
+                Главное правило цикла (Бушуева А.О. / Фомин А.М.): <b>ХГЧ за 3 дня до следующего Омнадрена</b>. Интервал нерушим.<br><br>
+                Если расчётная дата Омнадрена ИЛИ ХГЧ выпадает на воскресенье — <b>обе даты сдвигаются на +1 день синхронно</b>, чтобы 3-дневный интервал между ними сохранился.<br><br>
+                Капельницы и контрольный анализ тоже сдвигаются с воскресенья на понедельник.
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
         <div class="card-header" style="cursor:default;"><span class="card-icon">🛬</span><span class="card-title">Пауза курса (отъезд / командировка)</span></div>
         <div class="card-body">
             <div style="margin-bottom: 10px; font-size: 13px; color: var(--text2); line-height: 1.45;">Если в эти даты ты не сможешь делать процедуры — они автоматически перенесутся на день после возвращения. ХГЧ, попавший в окно, отменяется (после возвращения сразу Омнадрен).</div>
@@ -703,7 +720,7 @@
     <div class="footer">
         Клиника проф. Калинченко<br>
         Врач Бушуева А.О. · Фомин А.М.<br>
-        Протокол от 25.05.2026 · v5.0
+        Протокол от 25.05.2026 · v5.3
     </div>
 </div>
 
@@ -711,8 +728,8 @@
 <div class="bnav">
     <button class="on" onclick="go('today',this)"><span class="ni">💊</span>Сегодня</button>
     <button onclick="go('proc',this)"><span class="ni">💉</span>Процедуры</button>
-    <button onclick="go('food',this)"><span class="ni">🥩</span>Питание</button>
     <button onclick="go('prog',this)"><span class="ni">📊</span>Прогресс</button>
+    <button onclick="go('food',this)"><span class="ni">🥩</span>Питание</button>
     <button onclick="go('info',this)"><span class="ni">ℹ️</span>Инфо</button>
 </div>
 
@@ -813,7 +830,7 @@ const CONT = [
 ];
 
 const STORAGE_KEY = 'ht-v4-25052026';
-const DAYS = 90, WATER = 10;
+const DAYS = 90, WATER = 5;
 const OMNA_TOTAL = 9, HCG_TOTAL = 9, DRIPS_TOTAL = 3;
 const OMNA_INTERVAL = 10;  // дней между инъекциями Омнадрена
 const HCG_LEAD = 3;        // ХГЧ за 3 дня до Омнадрена
@@ -877,59 +894,96 @@ function getPlanEvents(){
         events.push({
             type:'drips', name:'Капельница #' + (i+1), date: d, done: true,
             detail:'отмечена ' + fmtDM(d),
-            calTime:'12:00', calDuration:90,
+            calTime:'12:00', calDuration:60,
             calDetail:'Витамин С 500 мг (10 мин) + Венофер/Ликферр 5 мл (25 мин)'
         });
     });
 
-    // === 2. Будущие Омнадрены + ХГЧ между ними ===
+    // === 2. Будущие Омнадрены + ХГЧ перед ними ===
+    // Правило (Фомин/Бушуева, памятка): ХГЧ ставится ЗА 3 ДНЯ ДО СЛЕДУЮЩЕГО Омнадрена.
+    // Это базовая привязка. В нормальной сетке = lastOmna + 7. Но при сдвиге (воскресенье)
+    // правило "за 3 дня до Омнадрена" приоритетнее, чем "+ 7 после предыдущего".
+    // Если воскресенье попадает на Омнадрен ИЛИ на ХГЧ — двигаем оба на +1 день СИНХРОННО,
+    // чтобы интервал между ними остался ровно 3 дня.
     let omnaCount = D.omna;
     let hcgCount = D.hcg;
     let lastOmnaDate = lastOf(D.procDates.omna);
 
     while(omnaCount < OMNA_TOTAL){
-        let nextDate;
-        let shifted = false;
+        let nextOmnaDate;
         if(omnaCount === 0){
-            nextDate = D.courseStart;
+            nextOmnaDate = D.courseStart;
         } else {
-            nextDate = addDays(lastOmnaDate, OMNA_INTERVAL);
+            nextOmnaDate = addDays(lastOmnaDate, OMNA_INTERVAL);
         }
-        if(isInPause(nextDate)){
-            nextDate = pauseReturnDate();
-            shifted = true;
+
+        let pauseShift = false, sundayShift = false;
+
+        // 1) Пауза: если Омнадрен попадает в окно командировки — сдвиг на день после возвращения
+        if(isInPause(nextOmnaDate)){
+            nextOmnaDate = pauseReturnDate();
+            pauseShift = true;
         }
+
+        // 2) ХГЧ перед этим Омнадреном (только если это не первый Омнадрен и ХГЧ в счётчике остались)
+        let hcgDate = null;
+        let hcgSkippedByPause = false;
+        if(omnaCount > 0 && hcgCount < HCG_TOTAL){
+            hcgDate = addDays(nextOmnaDate, -HCG_LEAD);  // = Омнадрен - 3 дня
+            if(isInPause(hcgDate)){
+                // ХГЧ попал в окно командировки — отменяется (по решению Врача Бушуевой А.О.)
+                hcgSkippedByPause = true;
+                hcgDate = null;
+            }
+        }
+
+        // 3) Синхронный воскресный сдвиг: если ИЛИ Омнадрен ИЛИ ХГЧ выпадает на вс — двигаем обе даты на +1
+        if(isSunday(nextOmnaDate) || (hcgDate && isSunday(hcgDate))){
+            nextOmnaDate = addDays(nextOmnaDate, 1);
+            if(hcgDate) hcgDate = addDays(hcgDate, 1);
+            sundayShift = true;
+            // После +1: новая дата ХГЧ может снова оказаться в паузе (редкий граничный случай)
+            if(hcgDate && isInPause(hcgDate)){
+                hcgSkippedByPause = true;
+                hcgDate = null;
+            }
+        }
+
+        // 4) Push ХГЧ (если он есть). Идёт по дате раньше Омнадрена — сортировка events в конце расставит.
+        if(hcgDate){
+            hcgCount++;
+            let hcgDetailText;
+            if(sundayShift) hcgDetailText = 'за 3 дня до Омнадрена · синхронный сдвиг +1 (вс — клиника не работает)';
+            else hcgDetailText = 'за 3 дня до следующего Омнадрена (через 7 дней после предыдущего)';
+            events.push({
+                type:'hcg',
+                name:'ХГЧ #' + hcgCount,
+                date: hcgDate,
+                done: false,
+                detail: hcgDetailText,
+                calTime:'12:00',
+                calDetail:'Хорионический гонадотропин 1500 ЕД в/м. Через 3 дня — Омнадрен.'
+            });
+        }
+
+        // 5) Push Омнадрен
         omnaCount++;
+        let omnaDetail;
+        if(pauseShift && sundayShift) omnaDetail = 'после командировки + воскресный сдвиг (синхронно с ХГЧ)';
+        else if(pauseShift) omnaDetail = 'сдвинут на день после возвращения из командировки';
+        else if(sundayShift) omnaDetail = 'перенесён с воскресенья на понедельник — ХГЧ перед ним сдвинут синхронно';
+        else if(omnaCount === 1) omnaDetail = 'старт курса · можно с капельницей в один день';
+        else omnaDetail = 'через 10 дней от предыдущего · ХГЧ за 3 дня до этой даты';
         events.push({
             type:'omna',
             name:'Омнадрен #' + omnaCount,
-            date: nextDate,
+            date: nextOmnaDate,
             done: false,
-            detail: shifted ? 'сдвинут на день после возвращения из командировки' :
-                (omnaCount === 1 ? 'старт курса · можно с капельницей в один день' :
-                    'через 10 дней после предыдущего'),
+            detail: omnaDetail,
             calTime:'12:00',
-            calDetail:'Омнадрен 250 мг, 1 мл в/м. Через 7 дней — ХГЧ.'
+            calDetail:'Омнадрен 250 мг, 1 мл в/м. Через 7 дней — ХГЧ (= за 3 дня до следующего Омнадрена).'
         });
-        lastOmnaDate = nextDate;
-
-        // ХГЧ через 7 дней (если есть следующий Омнадрен и счётчик ХГЧ не исчерпан)
-        if(omnaCount < OMNA_TOTAL && hcgCount < HCG_TOTAL){
-            const hcgDate = addDays(nextDate, OMNA_INTERVAL - HCG_LEAD);  // = +7
-            if(!isInPause(hcgDate)){
-                hcgCount++;
-                events.push({
-                    type:'hcg',
-                    name:'ХГЧ #' + hcgCount,
-                    date: hcgDate,
-                    done: false,
-                    detail:'через 7 дней после Омнадрена (= за 3 дня до следующего)',
-                    calTime:'12:00',
-                    calDetail:'Хорионический гонадотропин 1500 ЕД в/м. Через 3 дня — Омнадрен.'
-                });
-            }
-            // если в паузу — ХГЧ пропускается (по решению Врача Бушуевой А.О.)
-        }
+        lastOmnaDate = nextOmnaDate;
     }
 
     // === 3. Будущие капельницы ===
@@ -938,27 +992,28 @@ function getPlanEvents(){
 
     while(dripsCount < DRIPS_TOTAL){
         let nextDate;
-        let shifted = false;
         if(dripsCount === 0){
             nextDate = D.courseStart;
         } else {
             nextDate = addDays(lastDripDate, DRIPS_INTERVAL);
         }
-        if(isInPause(nextDate)){
-            nextDate = pauseReturnDate();
-            shifted = true;
-        }
+        const r = applyClinicRules(nextDate);
+        nextDate = r.date;
         dripsCount++;
+        let detailText;
+        if(r.pauseShift && r.sundayShift) detailText = 'сдвинута после командировки + с воскресенья';
+        else if(r.pauseShift) detailText = 'сдвинута на день после возвращения';
+        else if(r.sundayShift) detailText = 'перенесена с воскресенья на понедельник';
+        else if(dripsCount === 1) detailText = 'старт · можно с первым Омнадреном';
+        else detailText = 'через 7 дней · можно совмещать с уколом';
         events.push({
             type:'drips',
             name:'Капельница #' + dripsCount,
             date: nextDate,
             done: false,
-            detail: shifted ? 'сдвинута на день после возвращения' :
-                (dripsCount === 1 ? 'старт · можно с первым Омнадреном' :
-                    'через 7 дней · можно совмещать с уколом'),
+            detail: detailText,
             calTime:'12:00',
-            calDuration:90,
+            calDuration:60,
             calDetail:'Витамин С 500 мг (10 мин) + Венофер/Ликферр 5 мл (25 мин)'
         });
         lastDripDate = nextDate;
@@ -978,13 +1033,16 @@ function getPlanEvents(){
         });
     } else if(D.procDates.omna.length >= 3){
         const omna3 = D.procDates.omna[2];
-        const labDate = addDays(omna3, 10);
+        let labDate = addDays(omna3, 10);
+        const labR = applyClinicRules(labDate);
+        labDate = labR.date;
         events.push({
             type:'lab',
             name:'Контроль общего тестостерона',
             date: labDate,
             done: false,
-            detail:'утром натощак · результат — Врачу Бушуевой А.О.',
+            detail: labR.sundayShift ? 'перенесён с воскресенья · утром натощак · результат — Врачу Бушуевой А.О.' :
+                    'утром натощак · результат — Врачу Бушуевой А.О.',
             calTime:'09:00',
             calDetail:'Общий тестостерон. Сдать утром натощак. Результат отправить Врачу Бушуевой А.О. или Фомину в WhatsApp.',
             calLocation: CLINIC_ADDRESS
@@ -992,13 +1050,17 @@ function getPlanEvents(){
     }
 
     // === 5. Контрольная консультация через 90 дней ===
+    let visitDate = addDays(D.courseStart, 90);
+    const visitR = applyClinicRules(visitDate);
+    visitDate = visitR.date;
     events.push({
         type:'visit',
         name:'Контрольная консультация',
-        date: addDays(D.courseStart, 90),
+        date: visitDate,
         done: false,
         soft: true,
-        detail:'повторный анализ по полной программе',
+        detail: visitR.sundayShift ? 'перенесена с воскресенья · повторный анализ по полной программе' :
+                'повторный анализ по полной программе',
         calTime:'12:00',
         calDetail:'Контрольный визит к Врачу Бушуевой А.О. через 3 месяца от старта курса.'
     });
@@ -1014,7 +1076,7 @@ function getNextAction(){
 
 function renderNextAction(){
     const next = getNextAction();
-    const targets = ['procNextAction','progNextAction'];
+    const targets = ['progNextAction'];
     const setEmpty = html => targets.forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML = html; });
     if(!D.courseStart){
         setEmpty('');
@@ -1081,6 +1143,26 @@ function adjustForPause(dateStr){
     if(!hasPause()) return dateStr;
     if(isInPause(dateStr)) return pauseReturnDate();
     return dateStr;
+}
+
+// === Расписание клиники ===
+// Клиника не работает по воскресеньям → процедуру переносим на понедельник.
+function isSunday(dateStr){
+    return parseDate(dateStr).getDay() === 0;  // 0 = воскресенье
+}
+function avoidSunday(dateStr){
+    return isSunday(dateStr) ? addDays(dateStr, 1) : dateStr;
+}
+// Полный пересчёт: сначала пауза, потом воскресенье (с защитой от повторного попадания в паузу)
+function applyClinicRules(dateStr){
+    let d = dateStr;
+    let pauseShift = false, sundayShift = false;
+    if(isInPause(d)){ d = pauseReturnDate(); pauseShift = true; }
+    if(isSunday(d)){ d = addDays(d, 1); sundayShift = true; }
+    // На случай: pauseReturnDate сам выпал на вс → сдвиг ещё на день, и обратная проверка паузы
+    if(isInPause(d)){ d = pauseReturnDate(); pauseShift = true;
+                      if(isSunday(d)){ d = addDays(d, 1); sundayShift = true; } }
+    return { date: d, pauseShift, sundayShift };
 }
 
 function showToast(msg, type){
@@ -1418,41 +1500,35 @@ function renderProc(){
     const curKey = dk(cur);
     const curLabel = `Отмечаю на <b>${fmtDM(curKey)}</b>`;
 
+    // Единый источник истины — таймлайн. Берём из него следующие незавершённые события.
+    const allEvents = D.courseStart ? getPlanEvents() : [];
+    const futureEvents = allEvents.filter(e => !e.done);
+    const nextOmnaEv = futureEvents.find(e => e.type === 'omna');
+    const nextHcgEv  = futureEvents.find(e => e.type === 'hcg');
+    const nextDripEv = futureEvents.find(e => e.type === 'drips');
+
     // === Omnadren ===
     document.getElementById('omnaCnt').textContent = D.omna + '/' + OMNA_TOTAL;
     document.getElementById('omnaBar').style.width = (D.omna/OMNA_TOTAL*100) + '%';
     const lastOmna = lastOf(D.procDates.omna);
     const omnaSched = document.getElementById('omnaSched');
-    if(lastOmna && D.omna < OMNA_TOTAL){
-        let next = addDays(lastOmna, OMNA_INTERVAL);
-        if(isInPause(next)){
-            omnaSched.innerHTML = 'Последняя: ' + fmtDMY(lastOmna) + ' · следующая <b style="color:var(--warn)">после возвращения ' + fmtDM(pauseReturnDate()) + '</b>';
-        } else {
-            omnaSched.textContent = 'Последняя: ' + fmtDMY(lastOmna) + ' · следующая через 10 дней';
-        }
+    if(nextOmnaEv && lastOmna){
+        omnaSched.innerHTML = 'Последняя: ' + fmtDMY(lastOmna) + ' · следующая <b>' + fmtDM(nextOmnaEv.date) + '</b>';
+    } else if(lastOmna && D.omna >= OMNA_TOTAL) {
+        omnaSched.textContent = 'Курс завершён · последняя ' + fmtDMY(lastOmna);
+    } else if(nextOmnaEv){
+        omnaSched.innerHTML = '9 уколов · старт <b>' + fmtDM(nextOmnaEv.date) + '</b> · интервал 10 дней';
+    } else {
+        omnaSched.textContent = '9 уколов · старт курса · интервал 10 дней';
     }
-    else if(lastOmna && D.omna >= OMNA_TOTAL) omnaSched.textContent = 'Курс завершён · последняя ' + fmtDMY(lastOmna);
-    else omnaSched.textContent = '9 уколов · старт курса · интервал 10 дней';
     document.getElementById('omnaDateLabel').innerHTML = curLabel;
-    if(D.omna < OMNA_TOTAL && D.courseStart){
-        let nextDate;
-        if(lastOmna){
-            nextDate = addDays(lastOmna, OMNA_INTERVAL);
-        } else {
-            // Первый укол: на дату старта курса (или сегодня, если старт в прошлом)
-            nextDate = clampToTodayOrLater(D.courseStart);
-        }
-        const shifted = isInPause(nextDate);
-        if(shifted) nextDate = pauseReturnDate();
-        const isFirst = D.omna === 0;
+    if(nextOmnaEv){
         renderProcCalBtn('omnaCalBtn', {
-            date: nextDate,
+            date: nextOmnaEv.date,
             title: 'Омнадрен укол #' + (D.omna+1),
-            details: (shifted ? 'После возвращения из командировки. ' : '') +
-                (isFirst ? 'Омнадрен 250 мг, 1 мл в/м. Старт курса · можно вместе с капельницей.' :
-                    'Омнадрен 250 мг, 1 мл в/м. Через 7 дней — ХГЧ.'),
+            details: nextOmnaEv.calDetail || 'Омнадрен 250 мг, 1 мл в/м.',
             label: 'Запланировать укол #' + (D.omna+1),
-            time: '12:00'
+            time: nextOmnaEv.calTime || '12:00'
         });
     } else renderProcCalBtn('omnaCalBtn', null);
 
@@ -1461,27 +1537,30 @@ function renderProc(){
     document.getElementById('hcgBar').style.width = (D.hcg/HCG_TOTAL*100) + '%';
     const lastHcg = lastOf(D.procDates.hcg);
     const hcgSched = document.getElementById('hcgSched');
-    if(lastHcg && D.hcg < HCG_TOTAL) hcgSched.textContent = 'Последняя: ' + fmtDMY(lastHcg) + ' · следующая через 7 дней после Омнадрена';
-    else if(lastHcg && D.hcg >= HCG_TOTAL) hcgSched.textContent = 'Курс завершён · последняя ' + fmtDMY(lastHcg);
-    else hcgSched.textContent = '9 уколов · через 7 дней после Омнадрена';
+    if(nextHcgEv && lastHcg){
+        hcgSched.innerHTML = 'Последняя: ' + fmtDMY(lastHcg) + ' · следующая <b>' + fmtDM(nextHcgEv.date) + '</b> (за 3 дня до Омнадрена)';
+    } else if(lastHcg && D.hcg >= HCG_TOTAL){
+        hcgSched.textContent = 'Курс завершён · последняя ' + fmtDMY(lastHcg);
+    } else if(nextHcgEv){
+        hcgSched.innerHTML = '9 уколов · следующая <b>' + fmtDM(nextHcgEv.date) + '</b> · за 3 дня до Омнадрена';
+    } else {
+        hcgSched.textContent = '9 уколов · за 3 дня до следующего Омнадрена';
+    }
     document.getElementById('hcgDateLabel').innerHTML = curLabel;
-    if(D.hcg < HCG_TOTAL && lastOmna){
-        const nextHcgDate = addDays(lastOmna, OMNA_INTERVAL - HCG_LEAD);
-        if(isInPause(nextHcgDate)){
-            // ХГЧ в окне командировки — отменяется. Покажем уведомление.
-            document.getElementById('hcgCalBtn').innerHTML = `<div class="pause-hint" style="margin: 0 16px 14px;">🛬 Этот ХГЧ попадает в командировку — отменяется. После возвращения — Омнадрен #${D.omna+1}, и ХГЧ возобновится после него.</div>`;
-        } else {
-            renderProcCalBtn('hcgCalBtn', {
-                date: nextHcgDate,
-                title: 'ХГЧ укол #' + (D.hcg+1),
-                details: 'Хорионический гонадотропин 1500 ЕД в/м. Через 3 дня — следующий Омнадрен.',
-                label: 'Запланировать укол #' + (D.hcg+1),
-                time: '12:00'
-            });
-        }
+    if(nextHcgEv){
+        renderProcCalBtn('hcgCalBtn', {
+            date: nextHcgEv.date,
+            title: 'ХГЧ укол #' + (D.hcg+1),
+            details: nextHcgEv.calDetail || 'Хорионический гонадотропин 1500 ЕД в/м.',
+            label: 'Запланировать укол #' + (D.hcg+1),
+            time: nextHcgEv.calTime || '12:00'
+        });
     } else if(D.hcg < HCG_TOTAL && D.courseStart && !lastOmna){
         // Курс запущен, но первого Омнадрена ещё нет
-        document.getElementById('hcgCalBtn').innerHTML = `<div class="pause-hint" style="margin: 0 16px 14px; background: var(--accent-bg); color: var(--accent); border: 1px solid rgba(0,184,148,0.25);">ℹ️ ХГЧ ставится через 7 дней после Омнадрена. Сначала отметь первый укол Омнадрена.</div>`;
+        document.getElementById('hcgCalBtn').innerHTML = `<div class="pause-hint" style="margin: 0 16px 14px; background: var(--accent-bg); color: var(--accent); border: 1px solid rgba(0,184,148,0.25);">ℹ️ ХГЧ ставится за 3 дня до следующего Омнадрена. Сначала отметь первый укол Омнадрена.</div>`;
+    } else if(D.hcg < HCG_TOTAL && lastOmna){
+        // ХГЧ перед ближайшим следующим Омнадреном попал в командировку и пропускается
+        document.getElementById('hcgCalBtn').innerHTML = `<div class="pause-hint" style="margin: 0 16px 14px;">🛬 Ближайший ХГЧ попадает в командировку — пропускается. После возвращения — Омнадрен, далее ХГЧ возобновится за 3 дня до следующего.</div>`;
     } else renderProcCalBtn('hcgCalBtn', null);
 
     // === Drips ===
@@ -1489,36 +1568,24 @@ function renderProc(){
     document.getElementById('dripBar').style.width = (D.drips/DRIPS_TOTAL*100) + '%';
     const lastDrip = lastOf(D.procDates.drips);
     const dripSched = document.getElementById('dripSched');
-    if(lastDrip && D.drips < DRIPS_TOTAL){
-        let next = addDays(lastDrip, DRIPS_INTERVAL);
-        if(isInPause(next)){
-            dripSched.innerHTML = 'Последняя: ' + fmtDMY(lastDrip) + ' · следующая <b style="color:var(--warn)">после возвращения ' + fmtDM(pauseReturnDate()) + '</b>';
-        } else {
-            dripSched.textContent = 'Последняя: ' + fmtDMY(lastDrip) + ' · следующая через 7 дней';
-        }
+    if(nextDripEv && lastDrip){
+        dripSched.innerHTML = 'Последняя: ' + fmtDMY(lastDrip) + ' · следующая <b>' + fmtDM(nextDripEv.date) + '</b>';
+    } else if(lastDrip && D.drips >= DRIPS_TOTAL){
+        dripSched.textContent = 'Курс завершён · последняя ' + fmtDMY(lastDrip);
+    } else if(nextDripEv){
+        dripSched.innerHTML = 'Всего 3 капельницы · старт <b>' + fmtDM(nextDripEv.date) + '</b> · 1 раз в неделю';
+    } else {
+        dripSched.textContent = 'Всего 3 капельницы · 1 раз в неделю · можно в день укола';
     }
-    else if(lastDrip && D.drips >= DRIPS_TOTAL) dripSched.textContent = 'Курс завершён · последняя ' + fmtDMY(lastDrip);
-    else dripSched.textContent = 'Всего 3 капельницы · 1 раз в неделю · можно в день укола';
     document.getElementById('dripsDateLabel').innerHTML = curLabel;
-    if(D.drips < DRIPS_TOTAL && D.courseStart){
-        let nextDate;
-        if(lastDrip){
-            nextDate = addDays(lastDrip, DRIPS_INTERVAL);
-        } else {
-            nextDate = clampToTodayOrLater(D.courseStart);
-        }
-        const shifted = isInPause(nextDate);
-        if(shifted) nextDate = pauseReturnDate();
-        const isFirst = D.drips === 0;
+    if(nextDripEv){
         renderProcCalBtn('dripsCalBtn', {
-            date: nextDate,
+            date: nextDripEv.date,
             title: 'Капельница #' + (D.drips+1),
-            details: (shifted ? 'После возвращения из командировки. ' : '') +
-                (isFirst ? 'Витамин С 500 мг (10 мин) + Венофер/Ликферр 5 мл (25 мин). Старт · можно с первым Омнадреном.' :
-                    'Витамин С 500 мг (10 мин) + Венофер/Ликферр 5 мл (25 мин). Можно в день укола.'),
+            details: nextDripEv.calDetail || 'Витамин С 500 мг + Венофер/Ликферр 5 мл в/в.',
             label: 'Запланировать капельницу #' + (D.drips+1),
-            time: '12:00',
-            duration: 90
+            time: nextDripEv.calTime || '12:00',
+            duration: nextDripEv.calDuration || 60
         });
     } else renderProcCalBtn('dripsCalBtn', null);
 }
